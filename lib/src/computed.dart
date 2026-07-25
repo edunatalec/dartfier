@@ -2,7 +2,36 @@ import 'package:flutter/foundation.dart';
 
 import 'tracker.dart';
 
+/// A derived reactive value with automatic dependency tracking.
+///
+/// The computation is lazy: it runs on the first read and is cached until a
+/// dependency notifies. Dependencies are rediscovered on every recomputation,
+/// so conditional reads subscribe to exactly what the last run read.
+///
+/// ```dart
+/// final Signal<int> count = Signal(1);
+/// final Computed<int> doubled = Computed(() => count.value * 2);
+///
+/// print(doubled.value); // 2
+/// count.value = 5;
+/// print(doubled.value); // 10
+/// ```
+///
+/// The compute function must be synchronous — an `await` breaks tracking.
+/// A dependency cycle throws a [StateError] on read.
 class Computed<T> extends ChangeNotifier implements ValueListenable<T> {
+  /// Creates a computed value derived by the given function.
+  ///
+  /// When `equals` is provided, a recomputation whose result is judged equal
+  /// to the previous value keeps the previous object, preserving identity
+  /// for downstream `==` checks.
+  ///
+  /// ```dart
+  /// final Computed<List<Chapter>> visible = Computed(
+  ///   () => filter(chapters.value, query.value),
+  ///   equals: listEquals,
+  /// );
+  /// ```
   Computed(this._compute, {this._equals}) {
     if (kFlutterMemoryAllocationsEnabled) {
       ChangeNotifier.maybeDispatchObjectCreation(this);
@@ -31,6 +60,13 @@ class Computed<T> extends ChangeNotifier implements ValueListenable<T> {
     return _value;
   }
 
+  /// Reads the current value without registering a dependency.
+  ///
+  /// Still recomputes if the cached value is stale.
+  ///
+  /// ```dart
+  /// final Computed<int> shifted = Computed(() => doubled.peek() + 1);
+  /// ```
   T peek() {
     if (_dirty) _recompute();
 

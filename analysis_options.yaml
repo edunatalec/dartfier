@@ -41,3 +41,6 @@ linter:
     unnecessary_parenthesis: true
     unnecessary_breaks: true
     require_trailing_commas: true
+
+    # Published package
+    public_member_api_docs: true
