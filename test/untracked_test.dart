@@ -53,7 +53,7 @@ void main() {
       final Signal<int> ignored = Signal(0);
       final List<int> log = <int>[];
 
-      Effect(() => log.add(tracked.value + untracked(() => ignored.value)));
+      Effect((_) => log.add(tracked.value + untracked(() => ignored.value)));
 
       ignored.value = 100;
       await pumpEventQueue();
