@@ -1,6 +1,6 @@
 name: dartfier
 description: "Fine-grained reactivity over ChangeNotifier: Signal, Computed and an auto-tracking Observer widget."
-version: 0.0.1
+version: 0.1.0
 
 environment:
   sdk: ^3.12.2
