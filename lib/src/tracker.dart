@@ -35,6 +35,8 @@ class DependencyBag {
 
   Set<Listenable> _dependencies = const {};
 
+  bool get hasDependencies => _dependencies.isNotEmpty;
+
   T track<T>(T Function() run) {
     final Set<Listenable> reads = <Listenable>{};
     final T result = Tracker.collect(reads, run);

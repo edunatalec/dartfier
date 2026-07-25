@@ -55,14 +55,19 @@ void main() {
     });
 
     testWidgets('passes the build context to the builder', (tester) async {
+      final Signal<int> count = Signal(0);
+
       await tester.pumpWidget(
         Directionality(
           textDirection: TextDirection.rtl,
-          child: Observer((context) => Text(Directionality.of(context).name)),
+          child: Observer(
+            (context) =>
+                Text('${Directionality.of(context).name}:${count.value}'),
+          ),
         ),
       );
 
-      expect(find.text('rtl'), findsOneWidget);
+      expect(find.text('rtl:0'), findsOneWidget);
     });
 
     testWidgets('rebuilds when a computed result changes', (tester) async {
@@ -132,7 +137,8 @@ void main() {
     });
 
     testWidgets('does not track reads inside a nested builder', (tester) async {
-      final Signal<int> count = Signal(0);
+      final Signal<int> outer = Signal(0);
+      final Signal<int> inner = Signal(0);
       int outerBuilds = 0;
 
       await tester.pumpWidget(
@@ -140,18 +146,61 @@ void main() {
           Observer((context) {
             outerBuilds++;
 
-            return Builder(builder: (context) => Text('${count.value}'));
+            return Column(
+              children: [
+                Text('outer:${outer.value}'),
+                Builder(builder: (context) => Text('inner:${inner.value}')),
+              ],
+            );
           }),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('inner:0'), findsOneWidget);
+
+      inner.value = 1;
+      await tester.pump();
+
+      expect(outerBuilds, 1);
+      expect(find.text('inner:0'), findsOneWidget);
+    });
+
+    testWidgets('reports an error in debug when the builder tracks nothing', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_host(Observer((context) => const SizedBox())));
+
+      expect(tester.takeException(), isA<FlutterError>());
+    });
+
+    testWidgets('withChild passes the static child without rebuilding it', (
+      tester,
+    ) async {
+      final Signal<int> count = Signal(0);
+      int childBuilds = 0;
+      final Widget child = Builder(
+        builder: (context) {
+          childBuilds++;
+
+          return const SizedBox();
+        },
+      );
+
+      await tester.pumpWidget(
+        _host(
+          Observer.withChild(
+            childBuilder: (context, child) =>
+                Column(children: [Text('${count.value}'), child!]),
+            child: child,
+          ),
+        ),
+      );
 
       count.value = 1;
       await tester.pump();
 
-      expect(outerBuilds, 1);
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('1'), findsOneWidget);
+      expect(childBuilds, 1);
     });
   });
 }
