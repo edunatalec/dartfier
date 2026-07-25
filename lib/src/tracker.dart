@@ -15,6 +15,17 @@ abstract final class Tracker {
   }
 
   static void reportRead(Listenable source) => _reads?.add(source);
+
+  static T untracked<T>(T Function() run) {
+    final Set<Listenable>? previous = _reads;
+    _reads = null;
+
+    try {
+      return run();
+    } finally {
+      _reads = previous;
+    }
+  }
 }
 
 class DependencyBag {
