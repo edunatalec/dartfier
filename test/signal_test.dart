@@ -40,6 +40,20 @@ void main() {
       expect(count.value, 0);
     });
 
+    test('does not notify when equals judges the new value equal', () {
+      final Signal<List<int>> items = Signal(<int>[1, 2], equals: listEquals);
+      int notifications = 0;
+      items.addListener(() => notifications++);
+
+      items.value = <int>[1, 2];
+
+      expect(notifications, 0);
+
+      items.value = <int>[1, 2, 3];
+
+      expect(notifications, 1);
+    });
+
     test('implements ValueListenable for interop', () {
       final Signal<int> count = Signal(7);
 

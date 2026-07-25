@@ -1,4 +1,5 @@
 import 'package:dartfier/dartfier.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -208,6 +209,26 @@ void main() {
 
       expect(risky.value, 42);
     });
+
+    test(
+      'keeps the previous value identity when equals judges results equal',
+      () {
+        final Signal<int> count = Signal(1);
+        final Computed<List<int>> parity = Computed(
+          () => <int>[if (count.value.isOdd) 1 else 0],
+          equals: listEquals,
+        );
+        final List<int> first = parity.value;
+
+        count.value = 3;
+
+        expect(identical(parity.value, first), isTrue);
+
+        count.value = 2;
+
+        expect(identical(parity.value, first), isFalse);
+      },
+    );
 
     test('does not leak the tracking scope when a compute throws', () {
       final Signal<int> count = Signal(1);
