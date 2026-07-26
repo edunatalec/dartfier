@@ -16,6 +16,7 @@ Fine-grained reactivity for Flutter, built entirely on `ChangeNotifier`: `Signal
   - [untracked and peek](#untracked-and-peek)
 - [Semantics](#semantics)
 - [Rules of Use](#rules-of-use)
+- [Design Decisions](#design-decisions)
 - [License](#license)
 
 ## Installation
@@ -157,6 +158,15 @@ final Computed<int> shifted = Computed(() => doubled.peek() + 1);
 2. **Read `.value` in the `Observer` builder body.** Closures that run later — a nested `Builder`, a gesture callback — execute outside tracking and do not subscribe.
 3. **An `Effect` must not write to a signal it reads.** During the first run the write falls into the void (subscriptions attach after the body runs); from the first rerun on, it reschedules forever.
 4. **Dispose is yours.** `Signal`, `Computed` and `Effect` have owners: whoever creates them disposes them.
+
+## Design Decisions
+
+Deliberate gaps, not missing features:
+
+- **No `batch()`.** Effects coalesce through the microtask queue and widget rebuilds coalesce per frame, so a burst of synchronous writes already produces a single rerun/rebuild reading consistent state. A synchronous flush API would break that guarantee.
+- **No observable collections.** An equality guard and in-place mutation cannot coexist: a mutated list is identical to itself, so the write would be silently swallowed. The supported pattern is the immutable snapshot — `items.value = [...items.value, next]` — with `equals: listEquals` when notification cuts matter.
+- **No `context.watch()`.** Subscribing an `Element` from a getter requires either retaining unmounted elements until the next notification or weak-reference/finalizer machinery — both at odds with a core meant to be read in one sitting. `Observer` does the same job explicitly, one widget away.
+- **No async compute.** A `Computed` that awaits would silently stop tracking everything read after the first `await`. Async enters through [`AsyncSignal`](#asyncsignal), where the fetcher runs outside the graph and writes back.
 
 ## License
 
