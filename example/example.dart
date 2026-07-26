@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dartfier/dartfier.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +29,7 @@ class CounterPage extends StatefulWidget {
 class _CounterPageState extends State<CounterPage> {
   final Signal<int> count = Signal(0);
   final Signal<List<int>> history = Signal(<int>[], equals: listEquals);
+  final AsyncSignal<String> motto = AsyncSignal();
 
   late final Computed<int> doubled = Computed(() => count.value * 2);
 
@@ -43,11 +46,20 @@ class _CounterPageState extends State<CounterPage> {
 
       onCleanup(() => debugPrint('leaving $seen'));
     });
+
+    unawaited(motto.run(_fetchMotto));
+  }
+
+  Future<String> _fetchMotto() async {
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+
+    return 'reactivity without magic';
   }
 
   @override
   void dispose() {
     logger.dispose();
+    motto.dispose();
     doubled.dispose();
     history.dispose();
     count.dispose();
@@ -72,6 +84,11 @@ class _CounterPageState extends State<CounterPage> {
               Text('count: ${count.value}'),
               Text('doubled: ${doubled.value}'),
               Text('history: ${history.value}'),
+              Text(switch (motto.value) {
+                AsyncLoading() => 'motto: loading…',
+                AsyncData(:final value) => 'motto: $value',
+                AsyncError(:final error) => 'motto failed: $error',
+              }),
               child!,
             ],
           ),

@@ -12,6 +12,7 @@ Fine-grained reactivity for Flutter, built entirely on `ChangeNotifier`: `Signal
   - [Computed](#computed)
   - [Effect](#effect)
   - [Observer](#observer)
+  - [AsyncSignal](#asyncsignal)
   - [untracked and peek](#untracked-and-peek)
 - [Semantics](#semantics)
 - [Rules of Use](#rules-of-use)
@@ -105,6 +106,25 @@ Observer.withChild(
 ```
 
 In debug mode, an `Observer` whose builder tracks nothing throws a `FlutterError` — such a widget would never rebuild, which is the silent bug this model is most prone to.
+
+### AsyncSignal
+
+The bridge between the synchronous graph and asynchronous work. An `AsyncSignal<T>` is a `Signal<AsyncValue<T>>`: `run` executes a fetcher and publishes `AsyncLoading` → `AsyncData` / `AsyncError`, with latest-wins semantics — starting a new `run` drops the outcome of any older one still in flight.
+
+```dart
+final AsyncSignal<List<Book>> results = AsyncSignal();
+
+unawaited(results.run(() => api.search(query.value)));
+
+Observer((context) => switch (results.value) {
+  AsyncLoading(:final previous?) => BookList(previous, refreshing: true),
+  AsyncLoading() => const Spinner(),
+  AsyncData(:final value) => BookList(value),
+  AsyncError(:final error) => ErrorView(error),
+})
+```
+
+`AsyncLoading` and `AsyncError` carry the previous data, so a refetch keeps showing the old content instead of flashing a spinner — `value.valueOrNull` is the shortcut for "latest usable data". Tracking stays fully synchronous: the fetcher runs outside the graph and writes its outcome back.
 
 ### untracked and peek
 
