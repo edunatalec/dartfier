@@ -6,6 +6,7 @@ Fine-grained reactivity for Flutter, built entirely on `ChangeNotifier`: `Signal
 
 - [Installation](#installation)
 - [Basic Usage](#basic-usage)
+- [Why dartfier?](#why-dartfier)
 - [API](#api)
   - [Signal](#signal)
   - [Computed](#computed)
@@ -33,6 +34,13 @@ Observer((context) => Text('${count.value} × 2 = ${doubled.value}'))
 ```
 
 Reading `.value` inside a tracked scope — an `Observer` builder, a `Computed` function or an `Effect` body — subscribes the reader automatically. No listenable lists, no `Listenable.merge`.
+
+## Why dartfier?
+
+- **Native by construction.** `Signal` and `Computed` are `ChangeNotifier`s implementing `ValueListenable` — the whole engine speaks Flutter's own observability language. `ValueListenableBuilder`, `Listenable.merge`, `AnimatedBuilder` and any API that accepts a `Listenable` work out of the box, and a codebase built on `ValueNotifier` can adopt dartfier one variable at a time.
+- **Small enough to audit.** A few hundred lines, zero dependencies, no code generation. When you need to understand why something rebuilt, you can read the entire engine in one sitting.
+- **Explicit semantics.** The guarantees and the limits — consistent reads, coalesced effects, synchronous-only tracking, dispose ownership — are written down in this README and pinned by the test suite, including the hard cases: diamond graphs, conditional dependencies, cycles, cleanup order.
+- **Loud where it matters.** In debug mode, an `Observer` that tracks nothing throws instead of silently never rebuilding — the classic failure mode of read-based tracking becomes a first-run error.
 
 ## API
 
