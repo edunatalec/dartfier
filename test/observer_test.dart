@@ -12,6 +12,12 @@ class _ProbeSignal<T> extends Signal<T> {
   bool get isObserved => hasListeners;
 }
 
+class _ProbeNotifier extends ChangeNotifier {
+  bool get isObserved => hasListeners;
+
+  void bump() => notifyListeners();
+}
+
 void main() {
   group('Observer', () {
     testWidgets('rebuilds when a signal read in the builder changes', (
@@ -201,6 +207,151 @@ void main() {
 
       expect(find.text('1'), findsOneWidget);
       expect(childBuilds, 1);
+    });
+
+    testWidgets('rebuilds when a foreign listenable notifies', (tester) async {
+      final _ProbeNotifier foreign = _ProbeNotifier();
+      int builds = 0;
+
+      await tester.pumpWidget(
+        _host(
+          Observer((context) {
+            builds++;
+
+            return const SizedBox();
+          }, listenables: [foreign]),
+        ),
+      );
+
+      expect(builds, 1);
+
+      foreign.bump();
+      await tester.pump();
+
+      expect(builds, 2);
+    });
+
+    testWidgets('combines tracked reads with foreign listenables', (
+      tester,
+    ) async {
+      final Signal<int> count = Signal(0);
+      final ValueNotifier<bool> foreign = ValueNotifier(false);
+
+      await tester.pumpWidget(
+        _host(
+          Observer(
+            (context) => Text('${count.value} ${foreign.value}'),
+            listenables: [foreign],
+          ),
+        ),
+      );
+
+      count.value = 1;
+      await tester.pump();
+
+      expect(find.text('1 false'), findsOneWidget);
+
+      foreign.value = true;
+      await tester.pump();
+
+      expect(find.text('1 true'), findsOneWidget);
+    });
+
+    testWidgets('a non-empty listenables list satisfies the debug error', (
+      tester,
+    ) async {
+      final _ProbeNotifier foreign = _ProbeNotifier();
+
+      await tester.pumpWidget(
+        _host(Observer((context) => const SizedBox(), listenables: [foreign])),
+      );
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('an updated listenables list moves the subscription', (
+      tester,
+    ) async {
+      final _ProbeNotifier first = _ProbeNotifier();
+      final _ProbeNotifier second = _ProbeNotifier();
+      int builds = 0;
+
+      Widget pumpWith(Listenable listenable) => _host(
+        Observer((context) {
+          builds++;
+
+          return const SizedBox();
+        }, listenables: [listenable]),
+      );
+
+      await tester.pumpWidget(pumpWith(first));
+      await tester.pumpWidget(pumpWith(second));
+
+      first.bump();
+      await tester.pump();
+
+      final int before = builds;
+
+      second.bump();
+      await tester.pump();
+
+      expect(builds, before + 1);
+    });
+
+    testWidgets('an identical listenables list keeps rebuilding after a '
+        'parent rebuild', (tester) async {
+      final _ProbeNotifier foreign = _ProbeNotifier();
+      int builds = 0;
+
+      Widget pump() => _host(
+        Observer((context) {
+          builds++;
+
+          return const SizedBox();
+        }, listenables: [foreign]),
+      );
+
+      await tester.pumpWidget(pump());
+      await tester.pumpWidget(pump());
+
+      final int before = builds;
+
+      foreign.bump();
+      await tester.pump();
+
+      expect(builds, before + 1);
+    });
+
+    testWidgets('unsubscribes from the listenables when removed from the '
+        'tree', (tester) async {
+      final _ProbeNotifier foreign = _ProbeNotifier();
+
+      await tester.pumpWidget(
+        _host(Observer((context) => const SizedBox(), listenables: [foreign])),
+      );
+      await tester.pumpWidget(_host(const SizedBox()));
+
+      expect(foreign.isObserved, isFalse);
+    });
+
+    testWidgets('withChild accepts foreign listenables', (tester) async {
+      final ValueNotifier<int> foreign = ValueNotifier(0);
+
+      await tester.pumpWidget(
+        _host(
+          Observer.withChild(
+            builder: (context, child) =>
+                Column(children: [Text('${foreign.value}'), child!]),
+            listenables: [foreign],
+            child: const SizedBox(),
+          ),
+        ),
+      );
+
+      foreign.value = 7;
+      await tester.pump();
+
+      expect(find.text('7'), findsOneWidget);
     });
   });
 }

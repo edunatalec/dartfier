@@ -106,7 +106,16 @@ Observer.withChild(
 )
 ```
 
-In debug mode, an `Observer` whose builder tracks nothing throws a `FlutterError` — such a widget would never rebuild, which is the silent bug this model is most prone to.
+A foreign `Listenable` — a `FocusNode`, a `ScrollController`, any notifier that is not a signal — is invisible to tracking. Pass it through `listenables` and the observer also rebuilds when it notifies, alongside the tracked reads:
+
+```dart
+Observer(
+  (context) => Text(focusNode.hasFocus ? query.value : ''),
+  listenables: [focusNode],
+)
+```
+
+In debug mode, an `Observer` whose builder tracks nothing and lists no `listenables` throws a `FlutterError` — such a widget would never rebuild, which is the silent bug this model is most prone to.
 
 ### AsyncSignal
 

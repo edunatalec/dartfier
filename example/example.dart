@@ -30,6 +30,7 @@ class _CounterPageState extends State<CounterPage> {
   final Signal<int> count = Signal(0);
   final Signal<List<int>> history = Signal(<int>[], equals: listEquals);
   final AsyncSignal<String> motto = AsyncSignal();
+  final FocusNode noteFocus = FocusNode();
 
   late final Computed<int> doubled = Computed(() => count.value * 2);
 
@@ -58,6 +59,7 @@ class _CounterPageState extends State<CounterPage> {
 
   @override
   void dispose() {
+    noteFocus.dispose();
     logger.dispose();
     motto.dispose();
     doubled.dispose();
@@ -89,6 +91,15 @@ class _CounterPageState extends State<CounterPage> {
                 AsyncData(:final value) => 'motto: $value',
                 AsyncError(:final error) => 'motto failed: $error',
               }),
+              Observer(
+                (context) => Text(
+                  noteFocus.hasFocus
+                      ? 'noting at count ${count.value}'
+                      : 'note idle',
+                ),
+                listenables: [noteFocus],
+              ),
+              SizedBox(width: 200, child: TextField(focusNode: noteFocus)),
               child!,
             ],
           ),

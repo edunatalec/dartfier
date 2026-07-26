@@ -18,11 +18,24 @@ import 'tracker.dart';
 /// a nested [Builder], a gesture callback — execute outside tracking and do
 /// not subscribe. In debug mode, a builder that tracks nothing throws a
 /// [FlutterError], since such an observer would never rebuild.
+///
+/// A foreign [Listenable] — a [FocusNode], a [ScrollController], any
+/// notifier that is not a `Signal` — is invisible to tracking. Pass it
+/// through [listenables] to have the observer rebuild on its notifications
+/// too, alongside the tracked reads:
+///
+/// ```dart
+/// Observer(
+///   (context) => Text(focusNode.hasFocus ? query.value : ''),
+///   listenables: [focusNode],
+/// )
+/// ```
 class Observer extends StatefulWidget {
   /// Creates an observer that rebuilds when values read in `builder` change.
   const Observer(
     Widget Function(BuildContext context) this._builder, {
     super.key,
+    this.listenables,
   }) : _childBuilder = null,
        child = null;
 
@@ -43,6 +56,7 @@ class Observer extends StatefulWidget {
     required Widget Function(BuildContext context, Widget? child) builder,
     super.key,
     this.child,
+    this.listenables,
   }) : _builder = null,
        _childBuilder = builder;
 
@@ -54,12 +68,42 @@ class Observer extends StatefulWidget {
   /// rebuilt.
   final Widget? child;
 
+  /// Foreign [Listenable]s that also trigger a rebuild when they notify.
+  ///
+  /// Auto-tracking only sees `Signal` and `Computed` reads; a plain
+  /// [Listenable] consulted in the builder — a [FocusNode], a text
+  /// controller — never subscribes. Listing it here subscribes the observer
+  /// manually, so one widget combines tracked reads with untracked sources.
+  /// The subscription follows the list by element identity: it is kept while
+  /// the elements stay identical and renewed when they change. With a
+  /// non-empty list, the debug no-dependency error does not throw.
+  final List<Listenable>? listenables;
+
   @override
   State<Observer> createState() => _ObserverState();
 }
 
 class _ObserverState extends State<Observer> {
   late final DependencyBag _dependencies = DependencyBag(_onDependencyChanged);
+
+  Listenable? _merged;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _subscribeListenables();
+  }
+
+  @override
+  void didUpdateWidget(Observer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (_sameElements(oldWidget.listenables, widget.listenables)) return;
+
+    _unsubscribeListenables();
+    _subscribeListenables();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,11 +116,13 @@ class _ObserverState extends State<Observer> {
     });
 
     assert(() {
-      if (!_dependencies.hasDependencies) {
+      final bool subscribed = widget.listenables?.isNotEmpty ?? false;
+
+      if (!_dependencies.hasDependencies && !subscribed) {
         throw FlutterError(
           'Observer built without reading any Signal or Computed, so it will '
           'never rebuild on its own. Read a reactive value inside the '
-          'builder, or remove the Observer.',
+          'builder, pass listenables, or remove the Observer.',
         );
       }
 
@@ -92,8 +138,36 @@ class _ObserverState extends State<Observer> {
     setState(() {});
   }
 
+  void _subscribeListenables() {
+    final List<Listenable>? listenables = widget.listenables;
+
+    if (listenables == null || listenables.isEmpty) return;
+
+    _merged = Listenable.merge(List<Listenable>.of(listenables))
+      ..addListener(_onDependencyChanged);
+  }
+
+  void _unsubscribeListenables() {
+    _merged?.removeListener(_onDependencyChanged);
+    _merged = null;
+  }
+
+  bool _sameElements(List<Listenable>? previous, List<Listenable>? next) {
+    final List<Listenable> left = previous ?? const [];
+    final List<Listenable> right = next ?? const [];
+
+    if (left.length != right.length) return false;
+
+    for (int i = 0; i < left.length; i++) {
+      if (!identical(left[i], right[i])) return false;
+    }
+
+    return true;
+  }
+
   @override
   void dispose() {
+    _unsubscribeListenables();
     _dependencies.dispose();
 
     super.dispose();
