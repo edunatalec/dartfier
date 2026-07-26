@@ -19,40 +19,39 @@ import 'tracker.dart';
 /// not subscribe. In debug mode, a builder that tracks nothing throws a
 /// [FlutterError], since such an observer would never rebuild.
 class Observer extends StatefulWidget {
-  /// Creates an observer that rebuilds when values read in [builder] change.
+  /// Creates an observer that rebuilds when values read in `builder` change.
   const Observer(
-    Widget Function(BuildContext context) this.builder, {
+    Widget Function(BuildContext context) this._builder, {
     super.key,
-  }) : childBuilder = null,
+  }) : _childBuilder = null,
        child = null;
 
   /// Creates an observer whose [child] subtree is built once and passed back
-  /// to [childBuilder] on every rebuild.
+  /// to `builder` on every rebuild.
   ///
   /// Use it to keep a heavy static subtree out of the rebuilt region:
   ///
   /// ```dart
   /// Observer.withChild(
-  ///   childBuilder: (context, child) => Column(
+  ///   builder: (context, child) => Column(
   ///     children: [Text('${count.value}'), child!],
   ///   ),
   ///   child: const HeavyStaticWidget(),
   /// )
   /// ```
   const Observer.withChild({
-    required Widget Function(BuildContext context, Widget? child)
-    this.childBuilder,
+    required Widget Function(BuildContext context, Widget? child) builder,
     super.key,
     this.child,
-  }) : builder = null;
+  }) : _builder = null,
+       _childBuilder = builder;
 
-  /// Builds the observed subtree; every reactive value read here subscribes.
-  final Widget Function(BuildContext context)? builder;
+  final Widget Function(BuildContext context)? _builder;
 
-  /// Variant of [builder] that also receives the static [child].
-  final Widget Function(BuildContext context, Widget? child)? childBuilder;
+  final Widget Function(BuildContext context, Widget? child)? _childBuilder;
 
-  /// Subtree passed to [childBuilder] without being rebuilt.
+  /// Subtree passed back to the [Observer.withChild] builder without being
+  /// rebuilt.
   final Widget? child;
 
   @override
@@ -65,11 +64,11 @@ class _ObserverState extends State<Observer> {
   @override
   Widget build(BuildContext context) {
     final Widget built = _dependencies.track(() {
-      final Widget Function(BuildContext context)? builder = widget.builder;
+      final Widget Function(BuildContext context)? builder = widget._builder;
 
       if (builder != null) return builder(context);
 
-      return widget.childBuilder!(context, widget.child);
+      return widget._childBuilder!(context, widget.child);
     });
 
     assert(() {

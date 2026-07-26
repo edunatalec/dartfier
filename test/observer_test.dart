@@ -189,7 +189,7 @@ void main() {
       await tester.pumpWidget(
         _host(
           Observer.withChild(
-            childBuilder: (context, child) =>
+            builder: (context, child) =>
                 Column(children: [Text('${count.value}'), child!]),
             child: child,
           ),

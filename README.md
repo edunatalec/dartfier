@@ -89,7 +89,7 @@ For heavy static subtrees, `Observer.withChild` builds the child once and hands 
 
 ```dart
 Observer.withChild(
-  childBuilder: (context, child) => Column(
+  builder: (context, child) => Column(
     children: [Text('${count.value}'), child!],
   ),
   child: const HeavyStaticWidget(),

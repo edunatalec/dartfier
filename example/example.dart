@@ -66,7 +66,7 @@ class _CounterPageState extends State<CounterPage> {
       appBar: AppBar(title: const Text('dartfier')),
       body: Center(
         child: Observer.withChild(
-          childBuilder: (context, child) => Column(
+          builder: (context, child) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('count: ${count.value}'),
