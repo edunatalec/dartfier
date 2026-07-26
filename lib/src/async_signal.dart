@@ -28,6 +28,10 @@ class AsyncSignal<T> extends Signal<AsyncValue<T>> {
   /// Latest wins: if another [run] starts before this one completes, the
   /// older outcome — success or failure — is dropped silently. Completions
   /// arriving after `dispose` are ignored.
+  ///
+  /// A rerun that republishes a loading state equal to the current one
+  /// (same previous data) is swallowed by the equality guard and does not
+  /// notify listeners.
   Future<void> run(Future<T> Function() fetcher) async {
     final int generation = ++_generation;
     value = AsyncLoading<T>(previous: peek().valueOrNull);

@@ -87,6 +87,57 @@ void main() {
       expect(signal.value, const AsyncData<int>(7));
     });
 
+    test('keeps the error when a stale success arrives later', () async {
+      final AsyncSignal<int> signal = AsyncSignal();
+      final Completer<int> slow = Completer<int>();
+
+      final Future<void> slowRun = signal.run(() => slow.future);
+      await signal.run(() async => throw StateError('boom'));
+
+      expect(signal.value, isA<AsyncError<int>>());
+
+      slow.complete(1);
+      await slowRun;
+
+      expect(signal.value, isA<AsyncError<int>>());
+    });
+
+    test('carries previous data through consecutive errors', () async {
+      final AsyncSignal<int> signal = AsyncSignal();
+      await signal.run(() async => 1);
+      await signal.run(() async => throw StateError('first'));
+      await signal.run(() async => throw StateError('second'));
+
+      final AsyncError<int> error = signal.value as AsyncError<int>;
+
+      expect(error.previous, 1);
+    });
+
+    test(
+      'does not renotify when a rerun republishes an equal loading state',
+      () async {
+        final AsyncSignal<int> signal = AsyncSignal();
+        final Completer<int> first = Completer<int>();
+        final Completer<int> second = Completer<int>();
+
+        final Future<void> firstRun = signal.run(() => first.future);
+        int notifications = 0;
+        signal.addListener(() => notifications++);
+
+        final Future<void> secondRun = signal.run(() => second.future);
+
+        expect(notifications, 0);
+
+        second.complete(2);
+        await secondRun;
+        first.complete(1);
+        await firstRun;
+
+        expect(notifications, 1);
+        expect(signal.value, const AsyncData<int>(2));
+      },
+    );
+
     test('ignores a completion arriving after dispose', () async {
       final AsyncSignal<int> signal = AsyncSignal();
       final Completer<int> gate = Completer<int>();
