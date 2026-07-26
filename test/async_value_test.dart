@@ -36,6 +36,27 @@ void main() {
       expect(a, isNot(const AsyncError<int>('boom', previous: 2)));
     });
 
+    test('equality requires the exact generic type', () {
+      const AsyncData<num> wide = AsyncData<num>(1);
+      const AsyncData<int> narrow = AsyncData<int>(1);
+
+      expect(wide == narrow, isFalse);
+      expect(narrow == wide, isFalse);
+      expect(const AsyncData<int>(1), const AsyncData<int>(1));
+      expect(
+        const AsyncData<int>(1).hashCode,
+        const AsyncData<int>(1).hashCode,
+      );
+    });
+
+    test('AsyncData of a nullable type holding null still counts as data', () {
+      const AsyncData<int?> data = AsyncData<int?>(null);
+
+      expect(data.valueOrNull, isNull);
+      expect(data.isLoading, isFalse);
+      expect(data, isNot(const AsyncLoading<int?>()));
+    });
+
     test('valueOrNull returns data, previous or null', () {
       expect(const AsyncData<int>(3).valueOrNull, 3);
       expect(const AsyncLoading<int>(previous: 2).valueOrNull, 2);

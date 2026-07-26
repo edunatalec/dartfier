@@ -17,8 +17,11 @@ sealed class AsyncValue<T> {
   const AsyncValue();
 
   /// The most recent usable data: the current value when loaded, or the
-  /// previous one carried through loading and error states. `null` when no
-  /// data was ever produced.
+  /// previous one carried through loading and error states.
+  ///
+  /// `null` when no data was ever produced — and, for a nullable `T`, also
+  /// when the produced data is itself `null`; the two cases are
+  /// indistinguishable here. Pattern-match [AsyncData] to tell them apart.
   T? get valueOrNull => switch (this) {
     AsyncData<T>(:final T value) => value,
     AsyncLoading<T>(:final T? previous) => previous,
@@ -39,10 +42,12 @@ final class AsyncLoading<T> extends AsyncValue<T> {
 
   @override
   bool operator ==(Object other) =>
-      other is AsyncLoading<T> && other.previous == previous;
+      other.runtimeType == runtimeType &&
+      other is AsyncLoading<T> &&
+      other.previous == previous;
 
   @override
-  int get hashCode => Object.hash(AsyncLoading, T, previous);
+  int get hashCode => Object.hash(runtimeType, previous);
 }
 
 /// Operation completed with [value].
@@ -55,10 +60,12 @@ final class AsyncData<T> extends AsyncValue<T> {
 
   @override
   bool operator ==(Object other) =>
-      other is AsyncData<T> && other.value == value;
+      other.runtimeType == runtimeType &&
+      other is AsyncData<T> &&
+      other.value == value;
 
   @override
-  int get hashCode => Object.hash(AsyncData, T, value);
+  int get hashCode => Object.hash(runtimeType, value);
 }
 
 /// Operation failed with [error], optionally carrying the [previous] data.
@@ -79,10 +86,11 @@ final class AsyncError<T> extends AsyncValue<T> {
 
   @override
   bool operator ==(Object other) =>
+      other.runtimeType == runtimeType &&
       other is AsyncError<T> &&
       other.error == error &&
       other.previous == previous;
 
   @override
-  int get hashCode => Object.hash(AsyncError, T, error, previous);
+  int get hashCode => Object.hash(runtimeType, error, previous);
 }
