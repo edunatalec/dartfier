@@ -101,6 +101,7 @@ class _CounterPageState extends State<CounterPage> {
               Text('doubled: ${doubled.value}'),
               Text('history: ${history.value}'),
               Text(switch (motto.value) {
+                AsyncIdle() => 'motto: not requested yet',
                 AsyncLoading() => 'motto: loading…',
                 AsyncData(:final value) => 'motto: $value',
                 AsyncError(:final error) => 'motto failed: $error',

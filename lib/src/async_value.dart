@@ -1,9 +1,10 @@
 /// The state of an asynchronous operation exposed as a synchronous value.
 ///
-/// Pattern-match the three cases with a `switch`:
+/// Pattern-match the four cases with a `switch`:
 ///
 /// ```dart
 /// switch (results.value) {
+///   AsyncIdle() => const SearchPrompt(),
 ///   AsyncLoading(:final previous?) => ListView(previous),
 ///   AsyncLoading() => const Spinner(),
 ///   AsyncData(:final value) => ListView(value),
@@ -11,8 +12,9 @@
 /// }
 /// ```
 ///
-/// [AsyncLoading] and [AsyncError] carry the previous data through reloads,
-/// so UIs can keep showing the old value instead of flashing a spinner.
+/// [AsyncIdle] is the state before any operation starts. [AsyncLoading] and
+/// [AsyncError] carry the previous data through reloads, so UIs can keep
+/// showing the old value instead of flashing a spinner.
 sealed class AsyncValue<T> {
   const AsyncValue();
 
@@ -23,6 +25,7 @@ sealed class AsyncValue<T> {
   /// when the produced data is itself `null`; the two cases are
   /// indistinguishable here. Pattern-match [AsyncData] to tell them apart.
   T? get valueOrNull => switch (this) {
+    AsyncIdle<T>() => null,
     AsyncData<T>(:final T value) => value,
     AsyncLoading<T>(:final T? previous) => previous,
     AsyncError<T>(:final T? previous) => previous,
@@ -30,6 +33,21 @@ sealed class AsyncValue<T> {
 
   /// Whether the operation is currently in flight.
   bool get isLoading => this is AsyncLoading<T>;
+}
+
+/// No operation started yet.
+final class AsyncIdle<T> extends AsyncValue<T> {
+  /// Creates the idle state.
+  const AsyncIdle();
+
+  @override
+  bool operator ==(Object other) => other.runtimeType == runtimeType;
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  String toString() => 'AsyncIdle<$T>()';
 }
 
 /// Operation in flight, optionally carrying the [previous] data.
@@ -48,6 +66,11 @@ final class AsyncLoading<T> extends AsyncValue<T> {
 
   @override
   int get hashCode => Object.hash(runtimeType, previous);
+
+  @override
+  String toString() => previous == null
+      ? 'AsyncLoading<$T>()'
+      : 'AsyncLoading<$T>(previous: $previous)';
 }
 
 /// Operation completed with [value].
@@ -66,6 +89,9 @@ final class AsyncData<T> extends AsyncValue<T> {
 
   @override
   int get hashCode => Object.hash(runtimeType, value);
+
+  @override
+  String toString() => 'AsyncData<$T>($value)';
 }
 
 /// Operation failed with [error], optionally carrying the [previous] data.
@@ -93,4 +119,9 @@ final class AsyncError<T> extends AsyncValue<T> {
 
   @override
   int get hashCode => Object.hash(runtimeType, error, previous);
+
+  @override
+  String toString() => previous == null
+      ? 'AsyncError<$T>($error)'
+      : 'AsyncError<$T>($error, previous: $previous)';
 }

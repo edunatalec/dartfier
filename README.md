@@ -139,7 +139,7 @@ In debug mode, an `Observer` whose builder tracks nothing and lists no `listenab
 
 ### AsyncSignal
 
-The bridge between the synchronous graph and asynchronous work. An `AsyncSignal<T>` is a `Signal<AsyncValue<T>>`: `run` executes a fetcher and publishes `AsyncLoading` → `AsyncData` / `AsyncError`, with latest-wins semantics — starting a new `run` drops the outcome of any older one still in flight.
+The bridge between the synchronous graph and asynchronous work. An `AsyncSignal<T>` is a `Signal<AsyncValue<T>>`: it starts `AsyncIdle`, and `run` executes a fetcher and publishes `AsyncLoading` → `AsyncData` / `AsyncError`, with latest-wins semantics — starting a new `run` drops the outcome of any older one still in flight.
 
 ```dart
 final AsyncSignal<List<Book>> results = AsyncSignal();
@@ -147,6 +147,7 @@ final AsyncSignal<List<Book>> results = AsyncSignal();
 unawaited(results.run(() => api.search(query.value)));
 
 Observer((context) => switch (results.value) {
+  AsyncIdle() => const SearchPrompt(),
   AsyncLoading(:final previous?) => BookList(previous, refreshing: true),
   AsyncLoading() => const Spinner(),
   AsyncData(:final value) => BookList(value),

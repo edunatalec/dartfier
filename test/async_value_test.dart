@@ -3,6 +3,18 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('AsyncValue', () {
+    test('AsyncIdle equality requires the exact generic type', () {
+      expect(const AsyncIdle<int>(), const AsyncIdle<int>());
+      expect(const AsyncIdle<int>().hashCode, const AsyncIdle<int>().hashCode);
+      expect(const AsyncIdle<int>() == const AsyncIdle<num>(), isFalse);
+      expect(const AsyncIdle<int>(), isNot(const AsyncLoading<int>()));
+    });
+
+    test('AsyncIdle carries no data and is not loading', () {
+      expect(const AsyncIdle<int>().valueOrNull, isNull);
+      expect(const AsyncIdle<int>().isLoading, isFalse);
+    });
+
     test('AsyncData equality compares the value', () {
       expect(const AsyncData<int>(1), const AsyncData<int>(1));
       expect(const AsyncData<int>(1), isNot(const AsyncData<int>(2)));
@@ -68,6 +80,21 @@ void main() {
       expect(const AsyncLoading<int>().isLoading, isTrue);
       expect(const AsyncData<int>(1).isLoading, isFalse);
       expect(const AsyncError<int>('boom').isLoading, isFalse);
+    });
+
+    test('toString names the state, the generic type and the payload', () {
+      expect(const AsyncIdle<int>().toString(), 'AsyncIdle<int>()');
+      expect(const AsyncLoading<int>().toString(), 'AsyncLoading<int>()');
+      expect(
+        const AsyncLoading<int>(previous: 1).toString(),
+        'AsyncLoading<int>(previous: 1)',
+      );
+      expect(const AsyncData<int>(42).toString(), 'AsyncData<int>(42)');
+      expect(const AsyncError<int>('boom').toString(), 'AsyncError<int>(boom)');
+      expect(
+        const AsyncError<int>('boom', previous: 1).toString(),
+        'AsyncError<int>(boom, previous: 1)',
+      );
     });
   });
 }

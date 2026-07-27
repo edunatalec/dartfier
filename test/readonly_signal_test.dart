@@ -30,7 +30,7 @@ void main() {
       final AsyncSignal<int> total = AsyncSignal();
       final ReadonlySignal<AsyncValue<int>> view = total;
 
-      expect(view.value, const AsyncLoading<int>());
+      expect(view.value, const AsyncIdle<int>());
     });
 
     test('is assignable as ValueListenable', () {

@@ -3,10 +3,11 @@ import 'readonly_signal.dart';
 
 /// A [Signal] holding the [AsyncValue] of an asynchronous operation.
 ///
-/// [run] executes a fetcher and publishes [AsyncLoading], then [AsyncData]
-/// or [AsyncError], with latest-wins semantics: starting a new run drops the
-/// outcome of any older one still in flight. While a run is in flight the
-/// state carries the previous data, so UIs can keep showing it.
+/// The signal starts [AsyncIdle]. [run] executes a fetcher and publishes
+/// [AsyncLoading], then [AsyncData] or [AsyncError], with latest-wins
+/// semantics: starting a new run drops the outcome of any older one still in
+/// flight. While a run is in flight the state carries the previous data, so
+/// UIs can keep showing it.
 ///
 /// ```dart
 /// final AsyncSignal<int> total = AsyncSignal();
@@ -18,8 +19,8 @@ import 'readonly_signal.dart';
 /// Tracking stays fully synchronous: the fetcher runs outside the reactive
 /// graph and writes its outcome back into the signal.
 base class AsyncSignal<T> extends Signal<AsyncValue<T>> {
-  /// Creates the signal in the [AsyncLoading] state, with no previous data.
-  AsyncSignal() : super(AsyncLoading<T>());
+  /// Creates the signal in the [AsyncIdle] state.
+  AsyncSignal() : super(AsyncIdle<T>());
 
   int _generation = 0;
 

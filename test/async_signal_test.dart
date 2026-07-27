@@ -5,22 +5,29 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('AsyncSignal', () {
-    test('starts loading with no previous data', () {
+    test('starts idle with no data', () {
       final AsyncSignal<int> signal = AsyncSignal();
 
-      expect(signal.value, const AsyncLoading<int>());
+      expect(signal.value, const AsyncIdle<int>());
       expect(signal.value.valueOrNull, isNull);
     });
 
-    test('publishes data on success with a single notification', () async {
+    test('publishes loading then data on the first run', () async {
       final AsyncSignal<int> signal = AsyncSignal();
       int notifications = 0;
       signal.addListener(() => notifications++);
 
-      await signal.run(() async => 42);
+      final Completer<int> gate = Completer<int>();
+      final Future<void> flight = signal.run(() => gate.future);
+
+      expect(signal.value, const AsyncLoading<int>());
+      expect(notifications, 1);
+
+      gate.complete(42);
+      await flight;
 
       expect(signal.value, const AsyncData<int>(42));
-      expect(notifications, 1);
+      expect(notifications, 2);
     });
 
     test('keeps previous data while reloading', () async {
