@@ -1,6 +1,4 @@
-import 'package:flutter/foundation.dart';
-
-import 'tracker.dart';
+part of 'readonly_signal.dart';
 
 /// A derived reactive value with automatic dependency tracking.
 ///
@@ -19,7 +17,10 @@ import 'tracker.dart';
 ///
 /// The compute function must be synchronous — an `await` breaks tracking.
 /// A dependency cycle throws a [StateError] on read.
-class Computed<T> extends ChangeNotifier implements ValueListenable<T> {
+///
+/// [Computed] implements [ReadonlySignal] — expose it as such to hand
+/// readers listening without writing.
+base class Computed<T> extends ChangeNotifier implements ReadonlySignal<T> {
   /// Creates a computed value derived by the given function.
   ///
   /// When `equals` is provided, a recomputation whose result is judged equal
@@ -67,6 +68,7 @@ class Computed<T> extends ChangeNotifier implements ValueListenable<T> {
   /// ```dart
   /// final Computed<int> shifted = Computed(() => doubled.peek() + 1);
   /// ```
+  @override
   T peek() {
     if (_dirty) _recompute();
 

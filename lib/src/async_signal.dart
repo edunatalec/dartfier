@@ -1,5 +1,5 @@
 import 'async_value.dart';
-import 'signal.dart';
+import 'readonly_signal.dart';
 
 /// A [Signal] holding the [AsyncValue] of an asynchronous operation.
 ///
@@ -17,7 +17,7 @@ import 'signal.dart';
 ///
 /// Tracking stays fully synchronous: the fetcher runs outside the reactive
 /// graph and writes its outcome back into the signal.
-class AsyncSignal<T> extends Signal<AsyncValue<T>> {
+base class AsyncSignal<T> extends Signal<AsyncValue<T>> {
   /// Creates the signal in the [AsyncLoading] state, with no previous data.
   AsyncSignal() : super(AsyncLoading<T>());
 

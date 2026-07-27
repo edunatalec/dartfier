@@ -6,6 +6,7 @@
 
 - `Signal<T>` — reactive value on `ChangeNotifier` implementing `ValueListenable`, with an equality write guard and custom `equals`.
 - `Computed<T>` — lazy derived value with automatic dependency tracking, cycle detection and identity-preserving `equals`.
+- `ReadonlySignal<T>` — read-only supertype of `Signal` and `Computed`: reading and listening without writing. The interface is `abstract final` and the concrete classes are `base` — implementing them externally is a compile error (extending stays possible; the subclass must be marked `base`, `final` or `sealed`), so a `ReadonlySignal` is never a foreign notifier.
 - `Effect` — reactive side effect with microtask-coalesced reruns and a cleanup registrar.
 - `Observer` — auto-tracking widget, plus `Observer.withChild` for static subtrees, `listenables` for foreign `Listenable`s (a `FocusNode`, a text controller) observed alongside the tracked reads, and a debug error when the builder tracks nothing.
 - `untracked()` and `peek()` escape hatches for reading without subscribing.

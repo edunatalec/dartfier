@@ -10,6 +10,7 @@ Fine-grained reactivity for Flutter, built entirely on `ChangeNotifier`: `Signal
 - [API](#api)
   - [Signal](#signal)
   - [Computed](#computed)
+  - [ReadonlySignal](#readonlysignal)
   - [Effect](#effect)
   - [Observer](#observer)
   - [AsyncSignal](#asyncsignal)
@@ -71,6 +72,25 @@ final Computed<List<Chapter>> visible = Computed(
 ```
 
 With `equals`, a recomputation that produces an equal result keeps the previous object, preserving identity for downstream `==` checks. A dependency cycle throws a `StateError` on read.
+
+### ReadonlySignal
+
+The read-only supertype of `Signal` and `Computed`. Expose a value as `ReadonlySignal` to hand consumers reading and listening without writing — the natural parameter type for a leaf widget:
+
+```dart
+class CountBadge extends StatelessWidget {
+  const CountBadge({super.key, required this.count});
+
+  final ReadonlySignal<int> count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Observer((context) => Text('${count.value}'));
+  }
+}
+```
+
+The interface is `abstract final` and the concrete classes are `base`: implementing them outside dartfier is a compile error, so a `ReadonlySignal` is always a `Signal` or a `Computed` underneath — never a foreign notifier — and an `Observer` reading one subscribes. Extending `Signal`/`Computed` remains possible: the subclass must itself be marked `base`, `final` or `sealed` (Dart's modifier transitivity), and it inherits the tracked reads. In tests, the stand-in for a `ReadonlySignal` is a real `Signal`.
 
 ### Effect
 

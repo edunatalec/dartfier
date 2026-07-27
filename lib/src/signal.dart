@@ -1,6 +1,4 @@
-import 'package:flutter/foundation.dart';
-
-import 'tracker.dart';
+part of 'readonly_signal.dart';
 
 /// A reactive value built on [ChangeNotifier].
 ///
@@ -16,10 +14,11 @@ import 'tracker.dart';
 /// print(doubled.value); // 10
 /// ```
 ///
-/// [Signal] implements [ValueListenable], so it also works with
+/// [Signal] implements [ReadonlySignal] — expose it as such to hand readers
+/// listening without writing — and [ValueListenable], so it also works with
 /// [ValueListenableBuilder], [Listenable.merge] and any Flutter API that
 /// accepts a [Listenable].
-class Signal<T> extends ChangeNotifier implements ValueListenable<T> {
+base class Signal<T> extends ChangeNotifier implements ReadonlySignal<T> {
   /// Creates a signal holding [initial].
   ///
   /// When `equals` is provided it replaces `==` in the write guard: a write
@@ -70,6 +69,7 @@ class Signal<T> extends ChangeNotifier implements ValueListenable<T> {
   ///   (_) => debugPrint('${tracked.value} (page ${page.peek()})'),
   /// );
   /// ```
+  @override
   T peek() => _value;
 
   @override

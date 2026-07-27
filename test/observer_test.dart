@@ -6,7 +6,7 @@ Widget _host(Widget child) {
   return Directionality(textDirection: TextDirection.ltr, child: child);
 }
 
-class _ProbeSignal<T> extends Signal<T> {
+base class _ProbeSignal<T> extends Signal<T> {
   _ProbeSignal(super.initial);
 
   bool get isObserved => hasListeners;

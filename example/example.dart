@@ -26,6 +26,20 @@ class CounterPage extends StatefulWidget {
   State<CounterPage> createState() => _CounterPageState();
 }
 
+/// Leaf widget receiving a read-only view of a reactive value.
+class CountBadge extends StatelessWidget {
+  /// Creates the badge.
+  const CountBadge({super.key, required this.count});
+
+  /// Read-only count shown by the badge.
+  final ReadonlySignal<int> count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Observer((context) => Text('badge: ${count.value}'));
+  }
+}
+
 class _CounterPageState extends State<CounterPage> {
   final Signal<int> count = Signal(0);
   final Signal<List<int>> history = Signal(<int>[], equals: listEquals);
@@ -100,6 +114,7 @@ class _CounterPageState extends State<CounterPage> {
                 listenables: [noteFocus],
               ),
               SizedBox(width: 200, child: TextField(focusNode: noteFocus)),
+              CountBadge(count: doubled),
               child!,
             ],
           ),
