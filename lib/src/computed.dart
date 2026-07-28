@@ -33,7 +33,8 @@ base class Computed<T> extends ChangeNotifier implements ReadonlySignal<T> {
   ///   equals: listEquals,
   /// );
   /// ```
-  Computed(this._compute, {this._equals}) {
+  Computed(this._compute, {bool Function(T previous, T next)? equals})
+    : _equals = equals {
     if (kFlutterMemoryAllocationsEnabled) {
       ChangeNotifier.maybeDispatchObjectCreation(this);
     }

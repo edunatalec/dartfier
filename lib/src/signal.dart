@@ -29,7 +29,9 @@ base class Signal<T> extends ChangeNotifier implements ReadonlySignal<T> {
   ///
   /// items.value = [1, 2]; // equal by listEquals — listeners not notified
   /// ```
-  Signal(T initial, {this._equals}) : _value = initial {
+  Signal(T initial, {bool Function(T previous, T next)? equals})
+    : _equals = equals,
+      _value = initial {
     if (kFlutterMemoryAllocationsEnabled) {
       ChangeNotifier.maybeDispatchObjectCreation(this);
     }

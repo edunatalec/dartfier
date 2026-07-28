@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Lowered the minimum SDK from Dart `^3.12.2` to `^3.8.0` (Flutter `>=3.32.0`): the constructors of `Signal` and `Computed` no longer use private named parameters, with no change to the public API.
+- The example is now a runnable Flutter showcase app — one page per feature — instead of a single `example.dart`.
+
 ## [0.1.0] - 2026-07-25
 
 ### Added
