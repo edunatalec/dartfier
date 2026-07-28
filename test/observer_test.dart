@@ -171,6 +171,51 @@ void main() {
       expect(find.text('inner:0'), findsOneWidget);
     });
 
+    testWidgets('a nested Observer rebuilds alone without rebuilding the '
+        'outer one', (tester) async {
+      final Signal<int> outer = Signal(0);
+      final Signal<int> inner = Signal(0);
+      int outerBuilds = 0;
+      int innerBuilds = 0;
+
+      await tester.pumpWidget(
+        _host(
+          Observer((context) {
+            outerBuilds++;
+
+            return Column(
+              children: [
+                Text('outer:${outer.value}'),
+                Observer((context) {
+                  innerBuilds++;
+
+                  return Text('inner:${inner.value}');
+                }),
+              ],
+            );
+          }),
+        ),
+      );
+
+      expect(outerBuilds, 1);
+      expect(innerBuilds, 1);
+
+      inner.value = 1;
+      await tester.pump();
+
+      expect(outerBuilds, 1);
+      expect(innerBuilds, 2);
+      expect(find.text('inner:1'), findsOneWidget);
+
+      outer.value = 1;
+      await tester.pump();
+
+      expect(outerBuilds, 2);
+      expect(innerBuilds, 3);
+      expect(find.text('outer:1'), findsOneWidget);
+      expect(find.text('inner:1'), findsOneWidget);
+    });
+
     testWidgets('reports an error in debug when the builder tracks nothing', (
       tester,
     ) async {
