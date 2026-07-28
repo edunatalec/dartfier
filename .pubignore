@@ -27,3 +27,13 @@ analysis_options.yaml
 .superpowers/
 .metadata
 scripts/
+
+example/pubspec.lock
+example/test/
+example/android/
+example/ios/
+example/linux/
+example/macos/
+example/web/
+example/windows/
+example/build/

@@ -33,3 +33,13 @@ CLAUDE.md
 .flutter-plugins-dependencies
 /build/
 /coverage/
+
+example/.metadata
+example/pubspec.lock
+example/android/
+example/ios/
+example/linux/
+example/macos/
+example/web/
+example/windows/
+example/build/
