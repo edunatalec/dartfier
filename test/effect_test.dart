@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dartfier/dartfier.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -141,6 +143,32 @@ void main() {
         effect.dispose();
       },
     );
+
+    test('disposes itself and throws when reruns never stop writing to a '
+        'dependency', () async {
+      final count = Signal(0);
+      final List<Object> errors = [];
+      final List<String> log = [];
+
+      runZonedGuarded(() {
+        Effect((onCleanup) {
+          count.value = count.value + 1;
+          onCleanup(() => log.add('cleanup'));
+        });
+
+        count.value = 100;
+      }, (Object error, StackTrace stack) => errors.add(error));
+
+      await pumpEventQueue();
+
+      expect(errors.single, isA<StateError>());
+      expect(log.last, 'cleanup');
+
+      count.value = -1;
+      await pumpEventQueue();
+
+      expect(count.value, -1);
+    });
 
     test('runs cleanup before each rerun', () async {
       final Signal<int> count = Signal(1);

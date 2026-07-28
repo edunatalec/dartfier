@@ -25,8 +25,13 @@ typedef EffectCleanup = void Function();
 /// ```
 ///
 /// The body must be synchronous — reads after an `await` are not tracked.
-/// An effect must not write to a signal it reads: from the first rerun on,
-/// that reschedules forever.
+/// An effect must not write to a signal it reads — consult it with `peek`
+/// instead. During the first run such a write is ignored; from the first
+/// rerun on, every self-write schedules another rerun, and after 100
+/// consecutive self-triggered reruns the effect assumes it will never
+/// stabilize, disposes itself and throws a [StateError]. A self-write that
+/// converges before that — a state machine settling in a few steps — keeps
+/// working.
 class Effect {
   /// Creates the effect and runs its body immediately.
   Effect(this._run) {
@@ -42,6 +47,10 @@ class Effect {
   bool _disposed = false;
   bool _scheduled = false;
 
+  int _selfTriggeredReruns = 0;
+
+  static const int _maxSelfTriggeredReruns = 100;
+
   void _execute() {
     _runCleanups();
     _dependencies.track(() => _run(_cleanups.add));
@@ -51,13 +60,33 @@ class Effect {
     if (_disposed || _scheduled) return;
 
     _scheduled = true;
-    scheduleMicrotask(() {
-      _scheduled = false;
+    scheduleMicrotask(_rerun);
+  }
 
-      if (_disposed) return;
+  void _rerun() {
+    _scheduled = false;
 
-      _execute();
-    });
+    if (_disposed) return;
+
+    _execute();
+
+    if (!_scheduled) {
+      _selfTriggeredReruns = 0;
+
+      return;
+    }
+
+    _selfTriggeredReruns += 1;
+
+    if (_selfTriggeredReruns < _maxSelfTriggeredReruns) return;
+
+    dispose();
+
+    throw StateError(
+      'Effect did not stabilize after $_maxSelfTriggeredReruns consecutive '
+      'self-triggered reruns: the body (or a cleanup) writes to a signal the '
+      'effect reads. The effect has been disposed.',
+    );
   }
 
   /// Stops the effect: runs pending cleanups and cancels any scheduled rerun.

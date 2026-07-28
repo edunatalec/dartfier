@@ -96,7 +96,8 @@ class _EffectPageState extends State<EffectPage> {
               'cancel it — cleanups run in reverse order before every rerun '
               'and on dispose(). The body appends to the log through peek(): '
               'an effect must never read a signal it writes, or every rerun '
-              'would schedule the next one forever.',
+              'schedules the next one — after 100 consecutive self-triggered '
+              'reruns the effect disposes itself and throws a StateError.',
             ),
             const SizedBox(height: 16),
             Observer((context) => EventLog(entries: _log.value)),

@@ -4,6 +4,7 @@
 
 ### Changed
 
+- **Breaking (subtle)** — an `Effect` whose reruns keep writing to a signal it reads no longer reschedules forever: after 100 consecutive self-triggered reruns it disposes itself and throws a `StateError` instead of silently starving the event loop. Converging self-writes (a state machine settling in a few steps) keep working.
 - Lowered the minimum SDK from Dart `^3.12.2` to `^3.8.0` (Flutter `>=3.32.0`): the constructors of `Signal` and `Computed` no longer use private named parameters, with no change to the public API.
 - The example is now a runnable Flutter showcase app — one page per feature — instead of a single `example.dart`.
 
