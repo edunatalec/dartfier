@@ -4,8 +4,10 @@ analyzer:
   language:
     strict-casts: true
   errors:
+    # info by default, and the atelier pre-commit gate only reads error|warning
     sort_constructors_first: warning
     prefer_initializing_formals: warning
+    use_build_context_synchronously: warning
 
 linter:
   rules:
@@ -16,6 +18,9 @@ linter:
     directives_ordering: true
     sort_constructors_first: true
     prefer_initializing_formals: true
+
+    # Docs (published package: release gate requires /// on the public API)
+    public_member_api_docs: true
 
     # Async / streams
     unawaited_futures: true
@@ -41,6 +46,3 @@ linter:
     unnecessary_parenthesis: true
     unnecessary_breaks: true
     require_trailing_commas: true
-
-    # Published package
-    public_member_api_docs: true
