@@ -1,5 +1,8 @@
 # dartfier
 
+[![pub package](https://img.shields.io/pub/v/dartfier.svg)](https://pub.dev/packages/dartfier)
+[![package publisher](https://img.shields.io/pub/publisher/dartfier.svg)](https://pub.dev/packages/dartfier/publisher)
+
 Fine-grained reactivity for Flutter, built entirely on `ChangeNotifier`: `Signal`, `Computed`, `Effect` and an auto-tracking `Observer` widget. Zero dependencies, no code generation, full `ValueListenable` interop.
 
 ## Table of Contents
