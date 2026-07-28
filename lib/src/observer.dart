@@ -19,6 +19,10 @@ import 'tracker.dart';
 /// not subscribe. In debug mode, a builder that tracks nothing throws a
 /// [FlutterError], since such an observer would never rebuild.
 ///
+/// The builder must not write to a value the observer tracks: the framework
+/// discards a rebuild marked from inside a build, so the UI would silently
+/// show stale state. In debug mode, such a write throws a [FlutterError].
+///
 /// A foreign [Listenable] — a [FocusNode], a [ScrollController], any
 /// notifier that is not a `Signal` — is invisible to tracking. Pass it
 /// through [listenables] to have the observer rebuild on its notifications
@@ -88,6 +92,8 @@ class _ObserverState extends State<Observer> {
 
   Listenable? _merged;
 
+  bool _building = false;
+
   @override
   void initState() {
     super.initState();
@@ -107,13 +113,20 @@ class _ObserverState extends State<Observer> {
 
   @override
   Widget build(BuildContext context) {
-    final Widget built = _dependencies.track(() {
-      final Widget Function(BuildContext context)? builder = widget._builder;
+    _building = true;
 
-      if (builder != null) return builder(context);
+    final Widget built;
+    try {
+      built = _dependencies.track(() {
+        final Widget Function(BuildContext context)? builder = widget._builder;
 
-      return widget._childBuilder!(context, widget.child);
-    });
+        if (builder != null) return builder(context);
+
+        return widget._childBuilder!(context, widget.child);
+      });
+    } finally {
+      _building = false;
+    }
 
     assert(() {
       final bool subscribed = widget.listenables?.isNotEmpty ?? false;
@@ -134,6 +147,18 @@ class _ObserverState extends State<Observer> {
 
   void _onDependencyChanged() {
     if (!mounted) return;
+
+    assert(() {
+      if (!_building) return true;
+
+      throw FlutterError(
+        'Observer builder wrote to a Signal (or notified a Listenable) this '
+        'observer is subscribed to. The framework discards a rebuild marked '
+        'from inside a build, so the UI would silently show stale state. '
+        'Move the write out of the builder — a callback, an Effect — or '
+        'read the value with peek().',
+      );
+    }());
 
     setState(() {});
   }

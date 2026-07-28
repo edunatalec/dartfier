@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Debug `FlutterError` when an `Observer` builder writes to a signal it tracks: the framework discards a rebuild marked from inside a build, so the UI would silently show stale state.
+
 ### Changed
 
 - **Breaking (subtle)** — an `Effect` whose reruns keep writing to a signal it reads no longer reschedules forever: after 100 consecutive self-triggered reruns it disposes itself and throws a `StateError` instead of silently starving the event loop. Converging self-writes (a state machine settling in a few steps) keep working.

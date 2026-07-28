@@ -185,7 +185,7 @@ final Computed<int> shifted = Computed(() => doubled.peek() + 1);
 ## Rules of Use
 
 1. **`Computed` functions and `Effect` bodies are synchronous.** An `await` loses the tracking context — reads after it register nothing. The types (`T Function()`) already reject `async`; do not work around it with `.then`.
-2. **Read `.value` in the `Observer` builder body.** Closures that run later — a nested `Builder`, a gesture callback — execute outside tracking and do not subscribe.
+2. **Read `.value` in the `Observer` builder body.** Closures that run later — a nested `Builder`, a gesture callback — execute outside tracking and do not subscribe. The builder must also not *write* to a signal it tracks: the framework discards a rebuild marked from inside a build, so the UI would silently lag one value behind — in debug, that write throws a `FlutterError`.
 3. **An `Effect` must not write to a signal it reads.** During the first run the write falls into the void (subscriptions attach after the body runs); from the first rerun on, every self-write schedules another rerun. A self-write that converges in a few steps keeps working, but after 100 consecutive self-triggered reruns the effect assumes it will never stabilize, disposes itself and throws a `StateError` — instead of silently starving the event loop.
 4. **Dispose is yours.** `Signal`, `Computed` and `Effect` have owners: whoever creates them disposes them.
 

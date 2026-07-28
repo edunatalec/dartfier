@@ -224,6 +224,30 @@ void main() {
       expect(tester.takeException(), isA<FlutterError>());
     });
 
+    testWidgets('a builder that writes to a signal it reads reports an error '
+        'on rebuild', (tester) async {
+      final count = Signal(0);
+
+      await tester.pumpWidget(
+        _host(
+          Observer((context) {
+            final int seen = count.value;
+
+            if (seen > 0) count.value = seen + 1;
+
+            return Text('$seen');
+          }),
+        ),
+      );
+
+      expect(find.text('0'), findsOneWidget);
+
+      count.value = 1;
+      await tester.pump();
+
+      expect(tester.takeException(), isA<FlutterError>());
+    });
+
     testWidgets('withChild passes the static child without rebuilding it', (
       tester,
     ) async {
