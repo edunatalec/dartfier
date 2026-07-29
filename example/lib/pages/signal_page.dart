@@ -52,7 +52,7 @@ class _SignalPageState extends State<SignalPage> {
   }
 
   void _onIncrementTap() {
-    _count.value = _count.value + 1;
+    _count.update((current) => current + 1);
   }
 
   void _onSetFiveTap() {
@@ -85,7 +85,9 @@ class _SignalPageState extends State<SignalPage> {
             const InfoCard(
               'Signal(0) holds a value. Reading .value inside an Observer '
               'subscribes the widget; writing .value notifies it. No '
-              'listenable lists, no setState.',
+              'listenable lists, no setState. Minus writes .value directly; '
+              'plus goes through update((current) => current + 1), which '
+              'reads the current value with peek() before writing.',
             ),
             const SizedBox(height: 16),
             Observer(

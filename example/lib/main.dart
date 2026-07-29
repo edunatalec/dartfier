@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'pages/async_signal_page.dart';
 import 'pages/computed_page.dart';
 import 'pages/effect_page.dart';
+import 'pages/listen_when_page.dart';
 import 'pages/observer_page.dart';
 import 'pages/readonly_signal_page.dart';
 import 'pages/signal_page.dart';
@@ -60,6 +61,11 @@ class HomePage extends StatelessWidget {
         title: 'AsyncSignal',
         subtitle: 'Async as a synchronous value — idle, loading, data, error',
         page: AsyncSignalPage(),
+      ),
+      _Example(
+        title: 'listen & when',
+        subtitle: 'Side effects on change — previous → next, awaited condition',
+        page: ListenWhenPage(),
       ),
       _Example(
         title: 'untracked & peek',
