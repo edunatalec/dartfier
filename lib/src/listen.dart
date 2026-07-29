@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'effect.dart';
 import 'readonly_signal.dart';
 import 'untracked.dart';
@@ -57,5 +59,57 @@ extension ReadonlySignalSubscriptions<T> on ReadonlySignal<T> {
 
       untracked(() => onChange(before, next));
     });
+  }
+
+  /// Completes with the first value that satisfies [condition].
+  ///
+  /// The current value is checked first, with [peek]: when it already
+  /// satisfies [condition] the future completes with it and no subscription
+  /// is created — so awaiting inside a tracked scope never subscribes that
+  /// scope to the signal. Otherwise the future completes with the first
+  /// change that satisfies [condition], and the subscription is cancelled
+  /// right after. Changes are observed through [listen], so a burst of
+  /// synchronous writes completes the future with the value at the end of the
+  /// burst, not with the intermediate one that first satisfied it.
+  ///
+  /// ```dart
+  /// final AsyncSignal<int> total = AsyncSignal();
+  ///
+  /// unawaited(total.run(fetchTotal));
+  /// final AsyncValue<int> loaded = await total.when((v) => v is AsyncData);
+  /// ```
+  ///
+  /// A [condition] that throws on the initial check propagates synchronously;
+  /// one that throws on a change completes the future with that error and
+  /// cancels the subscription. There is no built-in timeout: if the signal is
+  /// disposed — or simply never satisfies [condition] — the future never
+  /// completes, so guard the call with [Future.timeout] when that matters.
+  Future<T> when(bool Function(T value) condition) {
+    final T current = peek();
+
+    if (condition(current)) return Future<T>.value(current);
+
+    final Completer<T> completer = Completer<T>();
+    late final Effect subscription;
+
+    subscription = listen((T previous, T next) {
+      final bool satisfied;
+
+      try {
+        satisfied = condition(next);
+      } catch (error, stackTrace) {
+        subscription.dispose();
+        completer.completeError(error, stackTrace);
+
+        return;
+      }
+
+      if (!satisfied) return;
+
+      subscription.dispose();
+      completer.complete(next);
+    });
+
+    return completer.future;
   }
 }
