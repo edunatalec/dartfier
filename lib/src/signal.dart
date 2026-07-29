@@ -61,6 +61,21 @@ base class Signal<T> extends ChangeNotifier implements ReadonlySignal<T> {
     notifyListeners();
   }
 
+  /// Derives the next value from the current one and writes it.
+  ///
+  /// The current value is read with [peek], so calling it inside a tracked
+  /// scope does not subscribe that scope to this signal. The write goes
+  /// through [value], keeping the equality guard — a [transform] returning a
+  /// value judged equal does not notify — and the no-op after [dispose].
+  ///
+  /// ```dart
+  /// final Signal<int> count = Signal(0);
+  ///
+  /// count.update((int current) => current + 1);
+  /// print(count.value); // 1
+  /// ```
+  void update(T Function(T current) transform) => value = transform(peek());
+
   /// Reads the current value without registering a dependency.
   ///
   /// Use it inside a tracked scope to consult a value the scope should not

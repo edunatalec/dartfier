@@ -60,4 +60,53 @@ void main() {
       expect(count, isA<ValueListenable<int>>());
     });
   });
+
+  group('Signal.update', () {
+    test('applies the transform and notifies listeners', () {
+      final Signal<int> count = Signal(1);
+      int notifications = 0;
+      count.addListener(() => notifications++);
+
+      count.update((int current) => current + 1);
+
+      expect(count.value, 2);
+      expect(notifications, 1);
+    });
+
+    test('does not notify when the transform returns an equal value', () {
+      final Signal<int> count = Signal(1);
+      int notifications = 0;
+      count.addListener(() => notifications++);
+
+      count.update((int current) => current);
+
+      expect(count.value, 1);
+      expect(notifications, 0);
+    });
+
+    test('does not subscribe the surrounding effect', () async {
+      final Signal<int> tracked = Signal(0);
+      final Signal<int> target = Signal(0);
+      final List<int> log = <int>[];
+
+      Effect((_) {
+        log.add(tracked.value);
+        target.update((int current) => current + 1);
+      });
+
+      expect(log, [0]);
+      expect(target.value, 1);
+
+      target.value = 100;
+      await pumpEventQueue();
+
+      expect(log, [0]);
+
+      tracked.value = 1;
+      await pumpEventQueue();
+
+      expect(log, [0, 1]);
+      expect(target.value, 101);
+    });
+  });
 }
