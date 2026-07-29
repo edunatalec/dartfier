@@ -47,9 +47,10 @@ class _ReadonlySignalPageState extends State<ReadonlySignalPage> {
               'ReadonlySignal<int> and takes both below.',
             ),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
               spacing: 12,
+              runSpacing: 8,
               children: [
                 CountBadge(label: 'signal', count: _count),
                 CountBadge(label: 'computed', count: _doubled),

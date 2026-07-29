@@ -98,9 +98,10 @@ class _SignalPageState extends State<SignalPage> {
               ),
             ),
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
               spacing: 12,
+              runSpacing: 8,
               children: [
                 IconButton.filledTonal(
                   onPressed: _onDecrementTap,
@@ -130,9 +131,10 @@ class _SignalPageState extends State<SignalPage> {
               ),
             ),
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
               spacing: 12,
+              runSpacing: 8,
               children: [
                 FilledButton.tonal(
                   onPressed: _onSetFiveTap,
@@ -162,9 +164,10 @@ class _SignalPageState extends State<SignalPage> {
               ),
             ),
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
               spacing: 12,
+              runSpacing: 8,
               children: [
                 FilledButton.tonal(
                   onPressed: _onSetEqualListTap,

@@ -42,6 +42,8 @@ Observer((context) => Text('${count.value} × 2 = ${doubled.value}'))
 
 Reading `.value` inside a tracked scope — an `Observer` builder, a `Computed` function or an `Effect` body — subscribes the reader automatically. No listenable lists, no `Listenable.merge`.
 
+The [example app](example/) runs in two halves: an API tour, one page per feature with the guarantees on screen, and four real-world recipes — a debounced search, a checkout, session events and an action that waits for its prerequisite — each one showing why it picked that API over the neighbouring one.
+
 ## Why dartfier?
 
 - **Native by construction.** `Signal` and `Computed` are `ChangeNotifier`s implementing `ValueListenable` — the whole engine speaks Flutter's own observability language. `ValueListenableBuilder`, `Listenable.merge`, `AnimatedBuilder` and any API that accepts a `Listenable` work out of the box, and a codebase built on `ValueNotifier` can adopt dartfier one variable at a time.

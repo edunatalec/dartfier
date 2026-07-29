@@ -9,6 +9,10 @@ import 'pages/readonly_signal_page.dart';
 import 'pages/signal_page.dart';
 import 'pages/untracked_peek_page.dart';
 import 'pages/value_listenable_page.dart';
+import 'recipes/cart/cart_page.dart';
+import 'recipes/gated_action/gated_action_page.dart';
+import 'recipes/search/search_page.dart';
+import 'recipes/session/session_page.dart';
 
 void main() => runApp(const ExampleApp());
 
@@ -31,7 +35,7 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const examples = <_Example>[
+    const apiTour = <_Example>[
       _Example(
         title: 'Signal',
         subtitle: 'A reactive value — writes notify, guarded by equality',
@@ -79,32 +83,110 @@ class HomePage extends StatelessWidget {
       ),
     ];
 
+    const recipes = <_Example>[
+      _Example(
+        title: 'Session events',
+        subtitle: 'Why listen and not Effect — reacting to the transition',
+        page: SessionPage(),
+      ),
+      _Example(
+        title: 'Debounced search',
+        subtitle: 'Why Effect and not listen — the cleanup is the debounce',
+        page: SearchPage(),
+      ),
+      _Example(
+        title: 'Checkout rules',
+        subtitle: 'Computed holding business rules — shipping, coupon, total',
+        page: CartPage(),
+      ),
+      _Example(
+        title: 'Action with a prerequisite',
+        subtitle: 'Why when — awaiting readiness inside a handler',
+        page: GatedActionPage(),
+      ),
+    ];
+
     return Scaffold(
       appBar: AppBar(title: const Text('dartfier Examples'), centerTitle: true),
-      body: ListView.separated(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: examples.length,
-        separatorBuilder: (_, _) =>
-            const Divider(height: 1, indent: 16, endIndent: 16),
-        itemBuilder: (context, index) {
-          final _Example example = examples[index];
-
-          return ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
-            ),
-            title: Text(example.title),
-            subtitle: Text(example.subtitle),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => example.page));
-            },
-          );
-        },
+      body: ListView(
+        padding: const EdgeInsets.only(bottom: 16),
+        children: [
+          const _SectionHeader(
+            title: 'API tour',
+            subtitle: 'One page per feature, with the guarantees on screen',
+          ),
+          ...apiTour.map((example) => _ExampleTile(example)),
+          const _SectionHeader(
+            title: 'Real-world recipes',
+            subtitle: 'Screens you would actually ship, and why each API',
+          ),
+          ...recipes.map((example) => _ExampleTile(example)),
+        ],
       ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExampleTile extends StatelessWidget {
+  const _ExampleTile(this.example);
+
+  final _Example example;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 4,
+          ),
+          title: Text(example.title),
+          subtitle: Text(example.subtitle),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => example.page));
+          },
+        ),
+        const Divider(height: 1, indent: 16, endIndent: 16),
+      ],
     );
   }
 }
