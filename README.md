@@ -17,6 +17,7 @@ Fine-grained reactivity for Flutter, built entirely on `ChangeNotifier`: `Signal
   - [Effect](#effect)
   - [Observer](#observer)
   - [AsyncSignal](#asyncsignal)
+  - [listen and when](#listen-and-when)
   - [untracked and peek](#untracked-and-peek)
 - [Semantics](#semantics)
 - [Rules of Use](#rules-of-use)
@@ -59,6 +60,12 @@ final Signal<List<int>> items = Signal([1, 2], equals: listEquals);
 
 items.value = [1, 2]; // equal by listEquals — listeners not notified
 items.value = [1, 2, 3]; // notifies
+```
+
+`update()` derives the next value from the current one, reading it with `peek()` — so calling it inside a tracked scope does not subscribe that scope to the signal it writes:
+
+```dart
+count.update((current) => current + 1);
 ```
 
 `Signal` implements `ValueListenable`, so it plugs into `ValueListenableBuilder`, `Listenable.merge` and any Flutter API that accepts a `Listenable` — no adapters.
@@ -160,6 +167,32 @@ Observer((context) => switch (results.value) {
 
 `AsyncLoading` and `AsyncError` carry the previous data, so a refetch keeps showing the old content instead of flashing a spinner — `value.valueOrNull` is the shortcut for "latest usable data". Tracking stays fully synchronous: the fetcher runs outside the graph and writes its outcome back.
 
+### listen and when
+
+Side effects that care about the *change*, not just the current value. `listen` calls back with the previous and the next value and returns the `Effect` behind it — dispose it to unsubscribe:
+
+```dart
+final Effect subscription = status.listen((previous, next) {
+  analytics.log('status', from: previous, to: next);
+});
+
+subscription.dispose();
+```
+
+A `listen` is an `Effect` with memory, and that buys the hard parts for free. Callbacks coalesce per microtask, so a burst of synchronous writes fires once, carrying the value from before the burst and the value after it; a `listen` on a `Computed` never observes the inconsistent mid-diamond state a raw `addListener` would; and the spurious notifications described in [Semantics](#semantics) are filtered — a recomputation landing on an equal value does not call back. The callback does not fire on creation (the first run only captures the current value), and its reads are untracked, so consulting other signals inside it subscribes to nothing.
+
+`when` completes a `Future` with the first value that satisfies a condition — state semantics, not stream semantics: the current value is checked first, with `peek()`, so an already-satisfied condition completes immediately, without subscribing to anything.
+
+```dart
+unawaited(results.run(() => api.search(query.value)));
+
+final AsyncValue<List<Book>> loaded = await results.when(
+  (value) => value is AsyncData<List<Book>>,
+);
+```
+
+Useful in tests and in orchestration — "wait until it is loaded, then continue". Changes are observed through `listen`, so a synchronous burst completes the future with the value at the end of the burst. There is no built-in timeout: while the condition is never satisfied — including after the signal is disposed — the future never completes, so wrap the call in `Future.timeout` when that matters.
+
 ### untracked and peek
 
 Escape hatches for reading without subscribing:
@@ -200,6 +233,18 @@ Deliberate gaps, not missing features:
 - **No observable collections.** An equality guard and in-place mutation cannot coexist: a mutated list is identical to itself, so the write would be silently swallowed. The supported pattern is the immutable snapshot — `items.value = [...items.value, next]` — with `equals: listEquals` when notification cuts matter.
 - **No `context.watch()`.** Subscribing an `Element` from a getter requires either retaining unmounted elements until the next notification or weak-reference/finalizer machinery — both at odds with a core meant to be read in one sitting. `Observer` does the same job explicitly, one widget away.
 - **No async compute.** A `Computed` that awaits would silently stop tracking everything read after the first `await`. Async enters through [`AsyncSignal`](#asyncsignal), where the fetcher runs outside the graph and writes back.
+- **No `debounce`/`throttle`.** Timing policy belongs at the call site: a real debounce needs cancelling and flushing, both of which depend on what the effect is for. An `Effect` and its cleanup registrar already express it in three lines, with cancellation included:
+
+  ```dart
+  Effect((onCleanup) {
+    final String text = query.value;
+    final Timer timer = Timer(const Duration(milliseconds: 300), () => search(text));
+    onCleanup(timer.cancel);
+  });
+  ```
+
+- **No event primitive.** A signal holds state, not a sequence in time — every value is observable at any moment, and an event that fires twice with the same payload is not. For a command signal, opt out of the equality guard: `Signal<String>('', equals: (_, _) => false)` notifies on every write, the same trick Solid's `{ equals: false }` uses. Streams remain the right tool for genuine event sequences.
+- **No `select()`.** `Computed` already is the select: `Computed(() => user.value.name)` recomputes lazily, notifies only its readers and tracks exactly what it read — a dedicated API would be the same object with a narrower name. Solidart shipped one and removed it.
 
 ## License
 
