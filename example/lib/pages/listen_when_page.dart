@@ -108,8 +108,8 @@ class _ListenWhenPageState extends State<ListenWhenPage> {
               'a row and logs a single change, from the value before the burst '
               'to the value after it. The parity subscription listens to a '
               'Computed and only logs when the derived value actually changes '
-              '— "Skip 2" notifies it, but even stays even, so the spurious '
-              'notification is filtered out.',
+              '— "Skip 2" moves the count, but even stays even, so the '
+              'Computed never notifies in the first place.',
             ),
             const SizedBox(height: 16),
             Observer(

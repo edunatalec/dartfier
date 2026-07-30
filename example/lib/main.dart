@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'pages/async_signal_page.dart';
+import 'pages/batch_page.dart';
 import 'pages/computed_page.dart';
 import 'pages/effect_page.dart';
 import 'pages/listen_when_page.dart';
@@ -75,6 +76,11 @@ class HomePage extends StatelessWidget {
         title: 'untracked & peek',
         subtitle: 'Escape hatches — reading without subscribing',
         page: UntrackedPeekPage(),
+      ),
+      _Example(
+        title: 'batch',
+        subtitle: 'Atomic updates — one notification, one reconciliation',
+        page: BatchPage(),
       ),
       _Example(
         title: 'ValueListenable interop',

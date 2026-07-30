@@ -19,6 +19,7 @@ Fine-grained reactivity for Flutter, built entirely on `ChangeNotifier`: `Signal
   - [AsyncSignal](#asyncsignal)
   - [listen and when](#listen-and-when)
   - [untracked and peek](#untracked-and-peek)
+  - [batch](#batch)
 - [Semantics](#semantics)
 - [Rules of Use](#rules-of-use)
 - [Design Decisions](#design-decisions)
@@ -181,7 +182,7 @@ final Effect subscription = status.listen((previous, next) {
 subscription.dispose();
 ```
 
-A `listen` is an `Effect` with memory, and that buys the hard parts for free. Callbacks coalesce per microtask, so a burst of synchronous writes fires once, carrying the value from before the burst and the value after it; a `listen` on a `Computed` never observes the inconsistent mid-diamond state a raw `addListener` would; and the spurious notifications described in [Semantics](#semantics) are filtered — a recomputation landing on an equal value does not call back. The callback does not fire on creation (the first run only captures the current value), and its reads are untracked, so consulting other signals inside it subscribes to nothing.
+A `listen` is an `Effect` with memory, and that buys the hard parts for free. Callbacks coalesce per microtask, so a burst of synchronous writes fires once, carrying the value from before the burst and the value after it; and a `listen` on a `Computed` never observes the inconsistent mid-diamond state a raw `addListener` would. The callback does not fire on creation (the first run only captures the current value), and its reads are untracked, so consulting other signals inside it subscribes to nothing.
 
 `when` completes a `Future` with the first value that satisfies a condition — state semantics, not stream semantics: the current value is checked first, with `peek()`, so an already-satisfied condition completes immediately, without subscribing to anything.
 
@@ -209,12 +210,41 @@ final Computed<int> shifted = Computed(() => doubled.peek() + 1);
 
 `untracked(fn)` suspends tracking for a block; `peek()` reads a single `Signal` or `Computed` without registering a dependency.
 
+### batch
+
+Writes that belong together often pass through a state that is not valid on its own. Outside a batch every write notifies immediately, so a listener can observe that half-applied state — swapping two signals lets `BB` escape between `AB` and `BA`. `batch` makes the group atomic:
+
+```dart
+batch(() {
+  final String held = first.peek();
+  first.value = second.peek();
+  second.value = held;
+});
+```
+
+Listeners are notified once, at the end, with the final value. Reads inside the block stay current — staleness still propagates per write, so a `Computed` read mid-batch already reflects the writes made so far; only the notifications are held back.
+
+Because a `Computed` reconciles once per batch instead of once per write, this is also how a burst of related writes avoids recomputing repeatedly:
+
+```dart
+batch(() {
+  query.value = '';
+  category.value = null;
+  inStock.value = false;
+});
+```
+
+Batches nest — only the outermost flushes — and pending notifications are still delivered when the body throws.
+
+`batch` is not required: a single write is already atomic, and state that always changes together belongs in one `Signal` (`filters.value = Filters(...)`), which needs no batch at all. Reach for it when independent signals must move as a unit, or when a burst feeds an expensive `Computed`. It does not help with writes arriving in separate turns — a scroll position or a stream — since there is no group to close.
+
 ## Semantics
 
-**Push-dirty, pull-compute.** Writing a `Signal` pushes dirtiness and notifications through dependents; recomputation happens on read. Consequences:
+**Staleness first, notifications last.** A write to a `Signal` runs in two phases. First it marks the reachable graph stale, waking nobody. Only then does each stale `Computed` that someone listens to resolve itself and notify — and only if its value actually changed. Consequences:
 
-- **Reads are always consistent.** Any read after any notification recomputes against current state — including diamond graphs (A feeds B and C; D reads B and C): D notifies once and reads consistently.
-- **Notifications may be spurious.** A `Computed` notifies when it becomes dirty, before knowing whether the new result differs. Widgets absorb this (rebuilds are frame-coalesced); raw listeners must tolerate notification without a value change.
+- **Reads are always consistent.** Any read after any notification recomputes against current state — including diamond graphs (A feeds B and C; D reads B and C): D notifies once and reads consistently. Nothing recomputes until the whole graph is marked, so no value is ever compared against a half-updated dependency.
+- **A `Computed` that lands on an equal value does not notify.** `Computed(() => user.value?.isPremium ?? false)` stays silent when `user` changes but `isPremium` doesn't: the widget does not rebuild and dependents further down neither recompute nor notify. Custom `equals` decides what "equal" means.
+- **Laziness survives.** A `Computed` nobody listens to has no notification to suppress, so a write does not recompute it — it stays stale until read. There is no observed/unobserved mode to opt into and nothing to keep alive.
 
 **Tracking per read.** Each layer subscribes one level down: an `Observer` reading a `Computed` subscribes to the `Computed`, not to the signals inside it.
 
@@ -231,7 +261,6 @@ final Computed<int> shifted = Computed(() => doubled.peek() + 1);
 
 Deliberate gaps, not missing features:
 
-- **No `batch()`.** Effects coalesce through the microtask queue and widget rebuilds coalesce per frame, so a burst of synchronous writes already produces a single rerun/rebuild reading consistent state. A synchronous flush API would break that guarantee.
 - **No observable collections.** An equality guard and in-place mutation cannot coexist: a mutated list is identical to itself, so the write would be silently swallowed. The supported pattern is the immutable snapshot — `items.value = [...items.value, next]` — with `equals: listEquals` when notification cuts matter.
 - **No `context.watch()`.** Subscribing an `Element` from a getter requires either retaining unmounted elements until the next notification or weak-reference/finalizer machinery — both at odds with a core meant to be read in one sitting. `Observer` does the same job explicitly, one widget away.
 - **No async compute.** A `Computed` that awaits would silently stop tracking everything read after the first `await`. Async enters through [`AsyncSignal`](#asyncsignal), where the fetcher runs outside the graph and writes back.

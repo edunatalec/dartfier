@@ -39,21 +39,164 @@ abstract final class Tracker {
   }
 }
 
+/// Something a derived node can read and be invalidated by.
+///
+/// Implemented by both `Signal` and `Computed`. A bag created with an owner
+/// links to these through [addDependent] instead of [Listenable.addListener],
+/// which separates the staleness cascade from the notifications outside
+/// listeners receive.
+abstract interface class ReactiveSource implements Listenable {
+  /// Registers [dependent] to be marked stale when this source changes.
+  void addDependent(ReactiveNode dependent);
+
+  /// Stops cascading staleness to [dependent].
+  void removeDependent(ReactiveNode dependent);
+}
+
+/// A derived node that propagates staleness before any value is compared.
+///
+/// Only [Computed] implements it: a node is both a source for whoever reads it
+/// and a dependent of whatever it reads.
+abstract interface class ReactiveNode implements ReactiveSource {
+  /// Marks the node stale: a source it reads directly changed.
+  void markStale();
+
+  /// Marks the node possibly stale: a derived value it reads may have
+  /// changed, which is only known once that value settles.
+  void markMaybeStale();
+
+  /// Resolves the node, recomputing only if a dependency really changed.
+  void settle();
+
+  /// Whether the last [settle] produced a different value.
+  bool get changed;
+
+  /// Recomputes when stale and notifies listeners only if the value changed.
+  void reconcile();
+}
+
+/// Splits a write into staleness first, notifications last.
+///
+/// A write marks the whole reachable graph stale before anything recomputes,
+/// so every value compared during [_flush] is read against fully current
+/// state. Without the split, a node could recompute while a sibling still
+/// holds a stale cache and cut off a notification on an inconsistent result.
+abstract final class Propagation {
+  static int _depth = 0;
+
+  static int _batches = 0;
+
+  static final List<ReactiveNode> _pending = <ReactiveNode>[];
+
+  static final Set<ReactiveNode> _scheduled = <ReactiveNode>{};
+
+  static final List<VoidCallback> _notifications = <VoidCallback>[];
+
+  static final Set<ReactiveSource> _notified = <ReactiveSource>{};
+
+  /// Runs [write] as the staleness phase, then reconciles what it marked.
+  ///
+  /// Reentrant: a write performed by a listener during reconciliation joins
+  /// the phase in progress instead of starting a nested one.
+  static void run(VoidCallback write) {
+    _depth += 1;
+
+    try {
+      write();
+    } finally {
+      _depth -= 1;
+    }
+
+    if (_depth == 0) _flush();
+  }
+
+  /// Groups every write in [run] into a single atomic update.
+  ///
+  /// Staleness still propagates per write, so reads inside [run] stay current;
+  /// only the notifications outside listeners receive are held back to the end.
+  static T batch<T>(T Function() run) {
+    _batches += 1;
+    _depth += 1;
+
+    try {
+      return run();
+    } finally {
+      _batches -= 1;
+      _depth -= 1;
+
+      if (_depth == 0) _flush();
+    }
+  }
+
+  /// Emits [notify] for [source], or defers it to the end of a batch.
+  ///
+  /// A source that writes repeatedly inside one batch notifies once.
+  static void emit(ReactiveSource source, VoidCallback notify) {
+    if (_batches == 0) {
+      notify();
+
+      return;
+    }
+
+    if (_notified.add(source)) _notifications.add(notify);
+  }
+
+  /// Schedules [node] to be reconciled at the end of the current phase.
+  ///
+  /// Scheduling the same node twice before it reconciles is a no-op; a node
+  /// invalidated again *by* the reconciliation is scheduled anew.
+  static void schedule(ReactiveNode node) {
+    if (_scheduled.add(node)) _pending.add(node);
+  }
+
+  static void _flush() {
+    _depth += 1;
+
+    try {
+      for (int i = 0; i < _notifications.length; i++) {
+        _notifications[i]();
+      }
+
+      for (int i = 0; i < _pending.length; i++) {
+        final ReactiveNode node = _pending[i];
+
+        _scheduled.remove(node);
+        node.reconcile();
+      }
+    } finally {
+      _notifications.clear();
+      _notified.clear();
+      _pending.clear();
+      _scheduled.clear();
+      _depth -= 1;
+    }
+  }
+}
+
 /// The dependency set of one tracked owner (a computed, effect or observer).
 ///
 /// Each [track] run rediscovers the dependencies and diffs subscriptions:
-/// new reads are subscribed, dropped reads are unsubscribed.
+/// new reads are subscribed, dropped reads are unsubscribed. With an [owner],
+/// dependencies that are themselves [ReactiveNode]s link through the staleness
+/// cascade; everything else subscribes as a plain listener.
 class DependencyBag {
   /// Creates a bag that invokes [_onDependencyChanged] when any tracked
   /// dependency notifies.
-  DependencyBag(this._onDependencyChanged);
+  DependencyBag(this._onDependencyChanged, {ReactiveNode? owner})
+    : _owner = owner;
 
   final VoidCallback _onDependencyChanged;
+
+  final ReactiveNode? _owner;
 
   Set<Listenable> _dependencies = const {};
 
   /// Whether the last [track] run registered at least one dependency.
   bool get hasDependencies => _dependencies.isNotEmpty;
+
+  /// The tracked dependencies that are themselves derived nodes.
+  Iterable<ReactiveNode> get reactiveDependencies =>
+      _dependencies.whereType<ReactiveNode>();
 
   /// Runs [run] under tracking and swaps subscriptions to what it read.
   T track<T>(T Function() run) {
@@ -67,24 +210,44 @@ class DependencyBag {
 
   void _swap(Set<Listenable> next) {
     for (final Listenable dependency in _dependencies) {
-      if (!next.contains(dependency)) {
-        dependency.removeListener(_onDependencyChanged);
-      }
+      if (!next.contains(dependency)) _detach(dependency);
     }
 
     for (final Listenable dependency in next) {
-      if (!_dependencies.contains(dependency)) {
-        dependency.addListener(_onDependencyChanged);
-      }
+      if (!_dependencies.contains(dependency)) _attach(dependency);
     }
 
     _dependencies = next;
   }
 
+  void _attach(Listenable dependency) {
+    final ReactiveNode? owner = _owner;
+
+    if (owner != null && dependency is ReactiveSource) {
+      dependency.addDependent(owner);
+
+      return;
+    }
+
+    dependency.addListener(_onDependencyChanged);
+  }
+
+  void _detach(Listenable dependency) {
+    final ReactiveNode? owner = _owner;
+
+    if (owner != null && dependency is ReactiveSource) {
+      dependency.removeDependent(owner);
+
+      return;
+    }
+
+    dependency.removeListener(_onDependencyChanged);
+  }
+
   /// Unsubscribes from every tracked dependency.
   void dispose() {
     for (final Listenable dependency in _dependencies) {
-      dependency.removeListener(_onDependencyChanged);
+      _detach(dependency);
     }
 
     _dependencies = const {};

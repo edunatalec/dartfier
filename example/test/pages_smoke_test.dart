@@ -1,5 +1,6 @@
 import 'package:example/main.dart';
 import 'package:example/pages/async_signal_page.dart';
+import 'package:example/pages/batch_page.dart';
 import 'package:example/pages/computed_page.dart';
 import 'package:example/pages/effect_page.dart';
 import 'package:example/pages/listen_when_page.dart';
@@ -24,6 +25,7 @@ const _pages = <Widget>[
   AsyncSignalPage(),
   ListenWhenPage(),
   UntrackedPeekPage(),
+  BatchPage(),
   ValueListenablePage(),
   SessionPage(),
   SearchPage(),

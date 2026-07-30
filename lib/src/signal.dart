@@ -18,7 +18,8 @@ part of 'readonly_signal.dart';
 /// listening without writing — and [ValueListenable], so it also works with
 /// [ValueListenableBuilder], [Listenable.merge] and any Flutter API that
 /// accepts a [Listenable].
-base class Signal<T> extends ChangeNotifier implements ReadonlySignal<T> {
+base class Signal<T> extends ChangeNotifier
+    implements ReadonlySignal<T>, ReactiveSource {
   /// Creates a signal holding [initial].
   ///
   /// When `equals` is provided it replaces `==` in the write guard: a write
@@ -39,6 +40,8 @@ base class Signal<T> extends ChangeNotifier implements ReadonlySignal<T> {
 
   final bool Function(T previous, T next)? _equals;
 
+  final Set<ReactiveNode> _dependents = <ReactiveNode>{};
+
   bool _disposed = false;
 
   T _value;
@@ -58,7 +61,14 @@ base class Signal<T> extends ChangeNotifier implements ReadonlySignal<T> {
     if (_disposed || _isEqual(_value, newValue)) return;
 
     _value = newValue;
-    notifyListeners();
+
+    Propagation.run(() {
+      for (final ReactiveNode dependent in _dependents.toList()) {
+        dependent.markStale();
+      }
+
+      Propagation.emit(this, notifyListeners);
+    });
   }
 
   /// Derives the next value from the current one and writes it.
@@ -90,8 +100,15 @@ base class Signal<T> extends ChangeNotifier implements ReadonlySignal<T> {
   T peek() => _value;
 
   @override
+  void addDependent(ReactiveNode dependent) => _dependents.add(dependent);
+
+  @override
+  void removeDependent(ReactiveNode dependent) => _dependents.remove(dependent);
+
+  @override
   void dispose() {
     _disposed = true;
+    _dependents.clear();
 
     super.dispose();
   }

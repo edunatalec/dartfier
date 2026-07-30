@@ -37,6 +37,35 @@ void main() {
       expect(find.text('1'), findsOneWidget);
     });
 
+    testWidgets('does not rebuild when a read computed stays equal', (
+      tester,
+    ) async {
+      final Signal<int> count = Signal(1);
+      final Computed<bool> odd = Computed(() => count.value.isOdd);
+      int builds = 0;
+
+      await tester.pumpWidget(
+        _host(
+          Observer((context) {
+            builds++;
+
+            return Text('${odd.value}');
+          }),
+        ),
+      );
+
+      count.value = 3;
+      await tester.pump();
+
+      expect(builds, 1);
+
+      count.value = 4;
+      await tester.pump();
+
+      expect(builds, 2);
+      expect(find.text('false'), findsOneWidget);
+    });
+
     testWidgets('does not rebuild when an unread signal changes', (
       tester,
     ) async {

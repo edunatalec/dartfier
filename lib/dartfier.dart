@@ -1,5 +1,6 @@
 export 'src/async_signal.dart';
 export 'src/async_value.dart';
+export 'src/batch.dart';
 export 'src/effect.dart';
 export 'src/listen.dart';
 export 'src/observer.dart';

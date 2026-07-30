@@ -3,8 +3,13 @@ part of 'readonly_signal.dart';
 /// A derived reactive value with automatic dependency tracking.
 ///
 /// The computation is lazy: it runs on the first read and is cached until a
-/// dependency notifies. Dependencies are rediscovered on every recomputation,
+/// dependency changes. Dependencies are rediscovered on every recomputation,
 /// so conditional reads subscribe to exactly what the last run read.
+///
+/// Listeners are notified only when the recomputed value actually differs —
+/// a dependency that changes without moving the result stays silent, and the
+/// cascade stops here. A computed nobody listens to is not recomputed by a
+/// write at all: it stays stale until read.
 ///
 /// ```dart
 /// final Signal<int> count = Signal(1);
@@ -20,7 +25,8 @@ part of 'readonly_signal.dart';
 ///
 /// [Computed] implements [ReadonlySignal] — expose it as such to hand
 /// readers listening without writing.
-base class Computed<T> extends ChangeNotifier implements ReadonlySignal<T> {
+base class Computed<T> extends ChangeNotifier
+    implements ReadonlySignal<T>, ReactiveNode {
   /// Creates a computed value derived by the given function.
   ///
   /// When `equals` is provided, a recomputation whose result is judged equal
@@ -44,12 +50,19 @@ base class Computed<T> extends ChangeNotifier implements ReadonlySignal<T> {
 
   final bool Function(T previous, T next)? _equals;
 
-  late final DependencyBag _dependencies = DependencyBag(_onDependencyChanged);
+  late final DependencyBag _dependencies = DependencyBag(
+    markStale,
+    owner: this,
+  );
+
+  final Set<ReactiveNode> _dependents = <ReactiveNode>{};
 
   bool _disposed = false;
-  bool _dirty = true;
   bool _computing = false;
   bool _hasValue = false;
+  bool _changed = false;
+
+  _Freshness _freshness = _Freshness.stale;
 
   late T _value;
 
@@ -57,7 +70,7 @@ base class Computed<T> extends ChangeNotifier implements ReadonlySignal<T> {
   T get value {
     Tracker.reportRead(this);
 
-    if (_dirty) _recompute();
+    settle();
 
     return _value;
   }
@@ -71,7 +84,7 @@ base class Computed<T> extends ChangeNotifier implements ReadonlySignal<T> {
   /// ```
   @override
   T peek() {
-    if (_dirty) _recompute();
+    settle();
 
     return _value;
   }
@@ -88,26 +101,83 @@ base class Computed<T> extends ChangeNotifier implements ReadonlySignal<T> {
           ? Tracker.collect(<Listenable>{}, _compute)
           : _dependencies.track(_compute);
 
-      if (!_hasValue || !_isEqual(_value, next)) _value = next;
+      _changed = !_hasValue || !_isEqual(_value, next);
+
+      if (_changed) _value = next;
 
       _hasValue = true;
     } finally {
       _computing = false;
     }
 
-    _dirty = false;
+    _freshness = _Freshness.clean;
   }
 
-  void _onDependencyChanged() {
-    if (_dirty) return;
+  @override
+  void markStale() => _invalidate(_Freshness.stale);
 
-    _dirty = true;
-    notifyListeners();
+  @override
+  void markMaybeStale() => _invalidate(_Freshness.maybeStale);
+
+  void _invalidate(_Freshness next) {
+    if (hasListeners) Propagation.schedule(this);
+
+    if (_freshness.index >= next.index) return;
+
+    final bool wasClean = _freshness == _Freshness.clean;
+    _freshness = next;
+
+    if (!wasClean) return;
+
+    for (final ReactiveNode dependent in _dependents.toList()) {
+      dependent.markMaybeStale();
+    }
   }
+
+  @override
+  bool get changed => _changed;
+
+  @override
+  void settle() {
+    if (_freshness == _Freshness.maybeStale) _askDependencies();
+
+    if (_freshness == _Freshness.stale) _recompute();
+  }
+
+  void _askDependencies() {
+    for (final ReactiveNode dependency in _dependencies.reactiveDependencies) {
+      dependency.settle();
+
+      if (!dependency.changed) continue;
+
+      _freshness = _Freshness.stale;
+
+      return;
+    }
+
+    _freshness = _Freshness.clean;
+    _changed = false;
+  }
+
+  @override
+  void reconcile() {
+    if (_disposed || _freshness == _Freshness.clean || !hasListeners) return;
+
+    settle();
+
+    if (_changed) notifyListeners();
+  }
+
+  @override
+  void addDependent(ReactiveNode dependent) => _dependents.add(dependent);
+
+  @override
+  void removeDependent(ReactiveNode dependent) => _dependents.remove(dependent);
 
   @override
   void dispose() {
     _disposed = true;
+    _dependents.clear();
     _dependencies.dispose();
 
     super.dispose();
@@ -119,3 +189,5 @@ base class Computed<T> extends ChangeNotifier implements ReadonlySignal<T> {
     return equals != null ? equals(previous, next) : previous == next;
   }
 }
+
+enum _Freshness { clean, maybeStale, stale }

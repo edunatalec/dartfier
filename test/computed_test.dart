@@ -57,7 +57,7 @@ void main() {
       expect(notifications, 1);
     });
 
-    test('does not notify again while already dirty', () {
+    test('notifies once per change without an intervening read', () {
       final Signal<int> count = Signal(1);
       final Computed<int> doubled = Computed(() => count.value * 2);
       doubled.value;
@@ -68,7 +68,7 @@ void main() {
       count.value = 2;
       count.value = 3;
 
-      expect(notifications, 1);
+      expect(notifications, 2);
       expect(doubled.value, 6);
     });
 
@@ -151,7 +151,7 @@ void main() {
       expect(notifications, 0);
     });
 
-    test('notifies even when the recomputed value is unchanged', () {
+    test('does not notify when the recomputed value is unchanged', () {
       final Signal<int> count = Signal(1);
       final Computed<bool> odd = Computed(() => count.value.isOdd);
       odd.value;
@@ -161,8 +161,111 @@ void main() {
 
       count.value = 3;
 
-      expect(notifications, 1);
+      expect(notifications, 0);
       expect(odd.value, true);
+    });
+
+    test('a stable link cuts the chain short', () {
+      final Signal<int> count = Signal(1);
+      final Computed<bool> odd = Computed(() => count.value.isOdd);
+
+      int runs = 0;
+      final Computed<String> label = Computed(() {
+        runs++;
+
+        return odd.value ? 'odd' : 'even';
+      });
+
+      int notifications = 0;
+      label.addListener(() => notifications++);
+      label.value;
+
+      expect(runs, 1);
+
+      count.value = 3;
+
+      expect(runs, 1);
+      expect(notifications, 0);
+
+      count.value = 4;
+
+      expect(runs, 2);
+      expect(notifications, 1);
+      expect(label.value, 'even');
+    });
+
+    test('does not recompute on a write while nobody listens', () {
+      final Signal<int> count = Signal(1);
+
+      int runs = 0;
+      final Computed<int> doubled = Computed(() {
+        runs++;
+
+        return count.value * 2;
+      });
+      doubled.value;
+
+      expect(runs, 1);
+
+      count.value = 5;
+
+      expect(runs, 1);
+      expect(doubled.value, 10);
+      expect(runs, 2);
+    });
+
+    test('keeps reconciling after a sibling compute throws', () {
+      final Signal<int> count = Signal(1);
+      final Computed<int> failing = Computed<int>(
+        () => count.value == 2 ? throw StateError('boom') : count.value,
+      );
+      final Computed<int> healthy = Computed(() => count.value * 2);
+      failing.value;
+      healthy.value;
+
+      int notifications = 0;
+      failing.addListener(() {});
+      healthy.addListener(() => notifications++);
+
+      expect(() => count.value = 2, throwsStateError);
+
+      count.value = 3;
+
+      expect(notifications, greaterThan(0));
+      expect(healthy.value, 6);
+    });
+
+    test('settles a write performed by a listener during reconciliation', () {
+      final Signal<int> count = Signal(1);
+      final Signal<String> mirror = Signal('');
+      final Computed<int> doubled = Computed(() => count.value * 2);
+      doubled.value;
+
+      doubled.addListener(() => mirror.value = 'saw ${doubled.value}');
+
+      final List<String> seen = <String>[];
+      mirror.addListener(() => seen.add(mirror.value));
+
+      count.value = 5;
+
+      expect(seen, <String>['saw 10']);
+      expect(mirror.value, 'saw 10');
+    });
+
+    test('notifies a listener added after an unread write', () {
+      final Signal<int> count = Signal(1);
+      final Computed<int> doubled = Computed(() => count.value * 2);
+      doubled.value;
+
+      count.value = 2;
+
+      int notifications = 0;
+      doubled.addListener(() => notifications++);
+
+      count.value = 3;
+
+      expect(notifications, 1);
+      expect(doubled.value, 6);
     });
 
     test(

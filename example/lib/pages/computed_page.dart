@@ -30,7 +30,7 @@ class _ComputedPageState extends State<ComputedPage> {
     equals: listEquals,
   );
 
-  List<int>? _previousEvens;
+  int _evensBuilds = 0;
   int _nextOdd = 1;
   int _nextEven = 2;
 
@@ -142,11 +142,11 @@ class _ComputedPageState extends State<ComputedPage> {
             const SectionTitle('Lazy, cached, recomputed on demand'),
             const SizedBox(height: 8),
             const InfoCard(
-              'Push-dirty, pull-compute: a write marks the Computed dirty '
-              'and notifies; the recomputation happens on the next read. '
-              'Stepping price or quantity above runs the compute once per '
-              'change, while extra rebuilds read the cache — "Rebuild page" '
-              'leaves the run count untouched.',
+              'Staleness first, notifications last: a write marks the graph '
+              'stale, and only a Computed someone listens to resolves itself '
+              'and notifies. Stepping price or quantity above runs the '
+              'compute once per change, while extra rebuilds read the cache '
+              '— "Rebuild page" leaves the run count untouched.',
             ),
             const SizedBox(height: 16),
             Observer((context) {
@@ -166,24 +166,24 @@ class _ComputedPageState extends State<ComputedPage> {
               ),
             ),
             const Divider(height: 48),
-            const SectionTitle('equals preserves identity'),
+            const SectionTitle('equals decides what counts as a change'),
             const SizedBox(height: 8),
             const InfoCard.highlight(
-              'A Computed notifies when it becomes dirty, before knowing '
-              'whether the result changed — "Add odd" still rebuilds this '
-              'section. But with equals: listEquals the recomputation keeps '
-              'the previous list object, so identical() holds and downstream '
-              '== cuts still work; "Add even" produces a genuinely new list.',
+              'A Computed only notifies when its value actually changes, and '
+              'equals: listEquals is what "changes" means here. "Add odd" '
+              'writes a new list into the signal, the Computed recomputes and '
+              'lands on an equal list — so nothing propagates and this '
+              'section does not rebuild. "Add even" produces a genuinely '
+              'different list and rebuilds it.',
             ),
             const SizedBox(height: 16),
             Observer((context) {
               final List<int> current = _evens.value;
-              final bool sameObject = identical(current, _previousEvens);
 
-              _previousEvens = current;
+              _evensBuilds++;
 
               return Text(
-                'evens: $current — same object as last build: $sameObject',
+                'evens: $current — this section built $_evensBuilds times',
                 textAlign: TextAlign.center,
               );
             }),
