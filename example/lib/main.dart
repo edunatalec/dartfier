@@ -8,7 +8,6 @@ import 'pages/listen_when_page.dart';
 import 'pages/observer_page.dart';
 import 'pages/readonly_signal_page.dart';
 import 'pages/signal_page.dart';
-import 'pages/stream_signal_page.dart';
 import 'pages/untracked_peek_page.dart';
 import 'pages/value_listenable_page.dart';
 import 'recipes/cart/cart_page.dart';
@@ -67,11 +66,6 @@ class HomePage extends StatelessWidget {
         title: 'AsyncSignal',
         subtitle: 'Async as a synchronous value — idle, loading, data, error',
         page: AsyncSignalPage(),
-      ),
-      _Example(
-        title: 'StreamSignal',
-        subtitle: 'A Stream as a reactive value — state over time, not events',
-        page: StreamSignalPage(),
       ),
       _Example(
         title: 'listen & when',

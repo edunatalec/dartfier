@@ -5,5 +5,4 @@ export 'src/effect.dart';
 export 'src/listen.dart';
 export 'src/observer.dart';
 export 'src/readonly_signal.dart';
-export 'src/stream_signal.dart';
 export 'src/untracked.dart';

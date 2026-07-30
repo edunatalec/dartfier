@@ -17,7 +17,6 @@ Fine-grained reactivity for Flutter, built entirely on `ChangeNotifier`: `Signal
   - [Effect](#effect)
   - [Observer](#observer)
   - [AsyncSignal](#asyncsignal)
-  - [StreamSignal](#streamsignal)
   - [listen and when](#listen-and-when)
   - [untracked and peek](#untracked-and-peek)
   - [batch](#batch)
@@ -170,26 +169,6 @@ Observer((context) => switch (results.value) {
 ```
 
 `AsyncLoading` and `AsyncError` carry the previous data, so a refetch keeps showing the old content instead of flashing a spinner — `value.valueOrNull` is the shortcut for "latest usable data". Tracking stays fully synchronous: the fetcher runs outside the graph and writes its outcome back.
-
-### StreamSignal
-
-The same bridge for a `Stream`. A `StreamSignal<T>` subscribes on creation — so it starts `AsyncLoading` — and publishes `AsyncData` on every event. An error becomes `AsyncError` carrying the data from before it, and the subscription stays open: a later event publishes data again.
-
-```dart
-final StreamSignal<Position> position = StreamSignal(geolocator.positionStream);
-
-Observer((context) => switch (position.value) {
-  AsyncData(:final value) => MapView(value),
-  AsyncError(:final error) => ErrorView(error),
-  _ => const Spinner(),
-})
-
-position.dispose(); // cancels the subscription
-```
-
-Closing the stream leaves the last state in place — a finished stream does not invalidate what it produced, and there is no done state to move to.
-
-The equality guard still applies, so a stream republishing a value it already emitted notifies nobody. That makes `StreamSignal` a fit for **state** arriving over time — a location, a connectivity status, a Firestore document — and a poor one for a **sequence of events**, where two identical payloads are two distinct facts. Keep those on the `Stream`.
 
 ### listen and when
 

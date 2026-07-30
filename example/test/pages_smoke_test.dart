@@ -7,7 +7,6 @@ import 'package:example/pages/listen_when_page.dart';
 import 'package:example/pages/observer_page.dart';
 import 'package:example/pages/readonly_signal_page.dart';
 import 'package:example/pages/signal_page.dart';
-import 'package:example/pages/stream_signal_page.dart';
 import 'package:example/pages/untracked_peek_page.dart';
 import 'package:example/pages/value_listenable_page.dart';
 import 'package:example/recipes/cart/cart_page.dart';
@@ -24,7 +23,6 @@ const _pages = <Widget>[
   EffectPage(),
   ObserverPage(),
   AsyncSignalPage(),
-  StreamSignalPage(),
   ListenWhenPage(),
   UntrackedPeekPage(),
   BatchPage(),
