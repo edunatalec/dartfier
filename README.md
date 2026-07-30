@@ -245,6 +245,15 @@ batch(() {
 
 Listeners are notified once, at the end, with the final value. Reads inside the block stay current — staleness still propagates per write, so a `Computed` read mid-batch already reflects the writes made so far; only the notifications are held back.
 
+The equality guard covers the group, not just each write: a batch that moves a value and puts it back notifies nobody, because the notification is compared against the value the signal held when the batch first wrote to it.
+
+```dart
+batch(() {
+  count.value = 2;
+  count.value = 1;
+}); // count was already 1 — no notification
+```
+
 Because a `Computed` reconciles once per batch instead of once per write, this is also how a burst of related writes avoids recomputing repeatedly:
 
 ```dart
@@ -270,6 +279,8 @@ Batches nest — only the outermost flushes — and pending notifications are st
 **Tracking per read.** Each layer subscribes one level down: an `Observer` reading a `Computed` subscribes to the `Computed`, not to the signals inside it.
 
 **Notifications run untracked.** Listeners run outside any tracking scope, so a listener that reads a `Signal` or `Computed` never subscribes whoever triggered the write — an `Effect` that writes from its body does not inherit the reads its listeners make.
+
+**A throwing compute does not silence its siblings.** When a `Computed` function throws while the graph settles, the remaining stale nodes still reconcile and notify; the first exception then surfaces from the write that triggered it, and any further one is reported to `FlutterError`. Which computed happens to be reconciled first never decides who gets notified.
 
 **Effects coalesce per microtask.** The first run is synchronous (on creation, to collect dependencies). Reruns are scheduled at the end of the microtask queue, so effects never observe a diamond glitch.
 

@@ -268,6 +268,50 @@ void main() {
       expect(healthy.value, 6);
     });
 
+    test('notifies the siblings of a computed whose compute throws', () {
+      final Signal<int> count = Signal(1);
+      final Computed<int> failing = Computed<int>(
+        () => count.value == 2 ? throw StateError('boom') : count.value,
+      );
+      final Computed<int> healthy = Computed(() => count.value * 10);
+      failing.value;
+      healthy.value;
+
+      failing.addListener(() {});
+
+      final List<int> seen = <int>[];
+      healthy.addListener(() => seen.add(healthy.value));
+
+      expect(() => count.value = 2, throwsStateError);
+
+      expect(seen, <int>[20]);
+    });
+
+    test('reports a second compute exception instead of losing it', () {
+      final Signal<int> count = Signal(1);
+      final Computed<int> first = Computed<int>(
+        () => count.value == 2 ? throw StateError('first') : count.value,
+      );
+      final Computed<int> second = Computed<int>(
+        () => count.value == 2 ? throw StateError('second') : count.value,
+      );
+      first.value;
+      second.value;
+
+      first.addListener(() {});
+      second.addListener(() {});
+
+      final List<Object> reported = <Object>[];
+      final FlutterExceptionHandler? handler = FlutterError.onError;
+      FlutterError.onError = (FlutterErrorDetails details) =>
+          reported.add(details.exception);
+      addTearDown(() => FlutterError.onError = handler);
+
+      expect(() => count.value = 2, throwsStateError);
+
+      expect(reported, hasLength(1));
+    });
+
     test('throws instead of hanging when a listener never settles', () {
       final Signal<int> count = Signal(0);
       final Computed<int> doubled = Computed(() => count.value * 2);

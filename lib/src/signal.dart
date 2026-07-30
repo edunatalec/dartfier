@@ -57,9 +57,14 @@ base class Signal<T> extends ChangeNotifier
   ///
   /// The write is ignored when the signal is disposed or when the new value
   /// is judged equal to the current one (by `equals`, falling back to `==`).
+  ///
+  /// Inside a `batch` the guard covers the group: the notification carries the
+  /// value the signal held when the batch first wrote to it, so a batch that
+  /// moves the value and puts it back notifies nobody.
   set value(T newValue) {
     if (_disposed || _isEqual(_value, newValue)) return;
 
+    final T previous = _value;
     _value = newValue;
 
     Propagation.run(() {
@@ -67,12 +72,12 @@ base class Signal<T> extends ChangeNotifier
         dependent.markStale();
       }
 
-      Propagation.emit(this, _notify);
+      Propagation.emit(this, () => _notify(previous));
     });
   }
 
-  void _notify() {
-    if (_disposed) return;
+  void _notify(T previous) {
+    if (_disposed || _isEqual(previous, _value)) return;
 
     notifyListeners();
   }

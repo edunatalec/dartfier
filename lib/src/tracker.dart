@@ -137,9 +137,11 @@ abstract final class Propagation {
 
   /// Emits [notify] for [source], or defers it to the end of a batch.
   ///
-  /// A source that writes repeatedly inside one batch notifies once. The
-  /// dedupe lasts as long as the batch does: a listener that opens its own
-  /// batch while the propagation runs notifies again.
+  /// A source that writes repeatedly inside one batch notifies once: only the
+  /// first [notify] is kept, so a callback closing over the value from before
+  /// that write can compare the whole group against it. The dedupe lasts as
+  /// long as the batch does — a listener that opens its own batch while the
+  /// propagation runs notifies again.
   static void emit(ReactiveSource source, VoidCallback notify) {
     if (_batches == 0) {
       Tracker.untracked(notify);
@@ -178,6 +180,9 @@ abstract final class Propagation {
     int reconciled = 0;
     int rounds = 0;
 
+    Object? failure;
+    StackTrace? failureTrace;
+
     while (notified < _notifications.length || reconciled < _pending.length) {
       rounds += 1;
 
@@ -203,9 +208,32 @@ abstract final class Propagation {
 
         reconciled += 1;
         _scheduled.remove(node);
-        node.reconcile();
+
+        try {
+          node.reconcile();
+        } catch (error, stackTrace) {
+          if (failure == null) {
+            failure = error;
+            failureTrace = stackTrace;
+
+            continue;
+          }
+
+          FlutterError.reportError(
+            FlutterErrorDetails(
+              exception: error,
+              stack: stackTrace,
+              library: 'dartfier',
+              context: ErrorDescription('reconciling a Computed after a write'),
+            ),
+          );
+        }
       }
     }
+
+    if (failure == null) return;
+
+    Error.throwWithStackTrace(failure, failureTrace!);
   }
 }
 

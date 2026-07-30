@@ -38,6 +38,21 @@ void main() {
       expect(seen, <int>[3]);
     });
 
+    test('stays silent when the batch leaves the value unchanged', () {
+      final Signal<int> count = Signal(1);
+
+      int notifications = 0;
+      count.addListener(() => notifications++);
+
+      batch(() {
+        count.value = 2;
+        count.value = 1;
+      });
+
+      expect(notifications, 0);
+      expect(count.value, 1);
+    });
+
     test('reconciles a computed once for several writes', () {
       final Signal<String> query = Signal('shoes');
       final Signal<bool> inStock = Signal(true);
