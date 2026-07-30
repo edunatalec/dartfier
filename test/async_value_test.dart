@@ -48,6 +48,34 @@ void main() {
       expect(a, isNot(const AsyncError<int>('boom', previous: 2)));
     });
 
+    test('AsyncLoading hashes previous alongside the type', () {
+      expect(
+        const AsyncLoading<int>(previous: 1).hashCode,
+        const AsyncLoading<int>(previous: 1).hashCode,
+      );
+      expect(
+        const AsyncLoading<int>(previous: 1).hashCode,
+        isNot(const AsyncLoading<int>().hashCode),
+      );
+    });
+
+    test('AsyncError hashes error and previous, ignoring the stack trace', () {
+      final AsyncError<int> withTrace = AsyncError<int>(
+        'boom',
+        stackTrace: StackTrace.current,
+        previous: 1,
+      );
+
+      expect(
+        withTrace.hashCode,
+        const AsyncError<int>('boom', previous: 1).hashCode,
+      );
+      expect(
+        withTrace.hashCode,
+        isNot(const AsyncError<int>('boom', previous: 2).hashCode),
+      );
+    });
+
     test('equality requires the exact generic type', () {
       const AsyncData<num> wide = AsyncData<num>(1);
       const AsyncData<int> narrow = AsyncData<int>(1);
