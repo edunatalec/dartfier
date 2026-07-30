@@ -54,6 +54,17 @@ void main() {
       expect(notifications, 1);
     });
 
+    test('leaves a dependent computed frozen on its last value', () {
+      final Signal<int> count = Signal(1);
+      final Computed<int> doubled = Computed(() => count.value * 2);
+      doubled.value;
+
+      count.dispose();
+      doubled.dispose();
+
+      expect(doubled.value, 2);
+    });
+
     test('implements ValueListenable for interop', () {
       final Signal<int> count = Signal(7);
 

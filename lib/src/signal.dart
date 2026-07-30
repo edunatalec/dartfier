@@ -67,8 +67,14 @@ base class Signal<T> extends ChangeNotifier
         dependent.markStale();
       }
 
-      Propagation.emit(this, notifyListeners);
+      Propagation.emit(this, _notify);
     });
+  }
+
+  void _notify() {
+    if (_disposed) return;
+
+    notifyListeners();
   }
 
   /// Derives the next value from the current one and writes it.

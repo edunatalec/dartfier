@@ -226,6 +226,41 @@ void main() {
       expect(log, ['second', 'first']);
     });
 
+    test('groups the writes its body makes inside a batch', () async {
+      final Signal<int> source = Signal(1);
+      final Signal<int> first = Signal(0);
+      final Signal<int> second = Signal(0);
+      final Computed<String> pair = Computed(
+        () => '${first.value}${second.value}',
+      );
+      pair.value;
+
+      final List<String> seen = <String>[];
+      pair.addListener(() => seen.add(pair.value));
+
+      int runs = 0;
+      final Effect effect = Effect((_) {
+        runs++;
+        final int next = source.value;
+
+        batch(() {
+          first.value = next;
+          second.value = next * 2;
+        });
+      });
+
+      expect(runs, 1);
+      expect(seen, ['12']);
+
+      source.value = 3;
+      await pumpEventQueue();
+
+      expect(runs, 2);
+      expect(seen, ['12', '36']);
+
+      effect.dispose();
+    });
+
     test('cleanup reads do not register dependencies', () async {
       final Signal<int> tracked = Signal(1);
       final Signal<int> aux = Signal(0);

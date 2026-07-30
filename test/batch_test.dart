@@ -135,6 +135,53 @@ void main() {
       expect(count.value, 7);
     });
 
+    test(
+      'delivers both notifications when the body throws after two writes',
+      () {
+        final Signal<int> first = Signal(0);
+        final Signal<int> second = Signal(0);
+        final Computed<String> pair = Computed(
+          () => '${first.value}${second.value}',
+        );
+        pair.value;
+
+        final List<String> seen = <String>[];
+        pair.addListener(() => seen.add(pair.value));
+
+        expect(
+          () => batch(() {
+            first.value = 1;
+            second.value = 2;
+
+            throw StateError('boom');
+          }),
+          throwsStateError,
+        );
+
+        expect(seen, <String>['12']);
+        expect(pair.value, '12');
+      },
+    );
+
+    test('starts a sibling batch from a clean state', () {
+      final Signal<int> count = Signal(0);
+
+      final List<int> seen = <int>[];
+      count.addListener(() => seen.add(count.peek()));
+
+      batch(() {
+        count.value = 1;
+        count.value = 2;
+      });
+
+      batch(() {
+        count.value = 3;
+        count.value = 4;
+      });
+
+      expect(seen, <int>[2, 4]);
+    });
+
     test('leaves writes outside a batch notifying immediately', () {
       final Signal<int> count = Signal(0);
 

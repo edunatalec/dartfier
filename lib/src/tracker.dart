@@ -81,6 +81,11 @@ abstract interface class ReactiveNode implements ReactiveSource {
 /// so every value compared during [_flush] is read against fully current
 /// state. Without the split, a node could recompute while a sibling still
 /// holds a stale cache and cut off a notification on an inconsistent result.
+///
+/// Notifications always run untracked. A listener that reads a reactive value
+/// would otherwise report that read to whatever tracked scope happened to
+/// trigger the write — an effect body, a builder — subscribing it to a value
+/// it never read.
 abstract final class Propagation {
   static int _depth = 0;
 
@@ -124,16 +129,20 @@ abstract final class Propagation {
       _batches -= 1;
       _depth -= 1;
 
+      if (_batches == 0) _notified.clear();
+
       if (_depth == 0) _flush();
     }
   }
 
   /// Emits [notify] for [source], or defers it to the end of a batch.
   ///
-  /// A source that writes repeatedly inside one batch notifies once.
+  /// A source that writes repeatedly inside one batch notifies once. The
+  /// dedupe lasts as long as the batch does: a listener that opens its own
+  /// batch while the propagation runs notifies again.
   static void emit(ReactiveSource source, VoidCallback notify) {
     if (_batches == 0) {
-      notify();
+      Tracker.untracked(notify);
 
       return;
     }
@@ -149,26 +158,53 @@ abstract final class Propagation {
     if (_scheduled.add(node)) _pending.add(node);
   }
 
+  static const int _maxRounds = 100;
+
   static void _flush() {
     _depth += 1;
 
     try {
-      for (int i = 0; i < _notifications.length; i++) {
-        _notifications[i]();
-      }
-
-      for (int i = 0; i < _pending.length; i++) {
-        final ReactiveNode node = _pending[i];
-
-        _scheduled.remove(node);
-        node.reconcile();
-      }
+      Tracker.untracked(_drain);
     } finally {
       _notifications.clear();
-      _notified.clear();
       _pending.clear();
       _scheduled.clear();
       _depth -= 1;
+    }
+  }
+
+  static void _drain() {
+    int notified = 0;
+    int reconciled = 0;
+    int rounds = 0;
+
+    while (notified < _notifications.length || reconciled < _pending.length) {
+      rounds += 1;
+
+      if (rounds > _maxRounds) {
+        throw StateError(
+          'Propagation did not settle after $_maxRounds rounds: a listener '
+          'writes to a value it is notified about, so every round schedules '
+          'another one. Move the write out of the listener, or read the '
+          'value with peek().',
+        );
+      }
+
+      final int notifyEnd = _notifications.length;
+      final int reconcileEnd = _pending.length;
+
+      while (notified < notifyEnd) {
+        _notifications[notified]();
+        notified += 1;
+      }
+
+      while (reconciled < reconcileEnd) {
+        final ReactiveNode node = _pending[reconciled];
+
+        reconciled += 1;
+        _scheduled.remove(node);
+        node.reconcile();
+      }
     }
   }
 }

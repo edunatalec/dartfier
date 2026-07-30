@@ -118,6 +118,39 @@ void main() {
       expect(picked.value, 3);
     });
 
+    test('drops a computed dependency it stopped reading', () {
+      final Signal<bool> useLeft = Signal(true);
+      final Signal<int> left = Signal(1);
+      final Signal<int> right = Signal(10);
+      final Computed<int> leftDoubled = Computed(() => left.value * 2);
+      final Computed<int> rightDoubled = Computed(() => right.value * 2);
+
+      int runs = 0;
+      final Computed<int> selected = Computed(() {
+        runs++;
+
+        return useLeft.value ? leftDoubled.value : rightDoubled.value;
+      });
+
+      int notifications = 0;
+      selected.addListener(() => notifications++);
+
+      expect(selected.value, 2);
+      expect(runs, 1);
+
+      useLeft.value = false;
+
+      expect(selected.value, 20);
+      expect(runs, 2);
+      expect(notifications, 1);
+
+      left.value = 5;
+
+      expect(selected.value, 20);
+      expect(runs, 2);
+      expect(notifications, 1);
+    });
+
     test('supports chained computeds', () {
       final Signal<int> count = Signal(1);
       final Computed<int> doubled = Computed(() => count.value * 2);
@@ -233,6 +266,16 @@ void main() {
 
       expect(notifications, greaterThan(0));
       expect(healthy.value, 6);
+    });
+
+    test('throws instead of hanging when a listener never settles', () {
+      final Signal<int> count = Signal(0);
+      final Computed<int> doubled = Computed(() => count.value * 2);
+      doubled.value;
+
+      doubled.addListener(() => count.value = count.peek() + 1);
+
+      expect(() => count.value = 1, throwsStateError);
     });
 
     test('settles a write performed by a listener during reconciliation', () {

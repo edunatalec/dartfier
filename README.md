@@ -248,6 +248,8 @@ Batches nest — only the outermost flushes — and pending notifications are st
 
 **Tracking per read.** Each layer subscribes one level down: an `Observer` reading a `Computed` subscribes to the `Computed`, not to the signals inside it.
 
+**Notifications run untracked.** Listeners run outside any tracking scope, so a listener that reads a `Signal` or `Computed` never subscribes whoever triggered the write — an `Effect` that writes from its body does not inherit the reads its listeners make.
+
 **Effects coalesce per microtask.** The first run is synchronous (on creation, to collect dependencies). Reruns are scheduled at the end of the microtask queue, so effects never observe a diamond glitch.
 
 ## Rules of Use
@@ -255,7 +257,8 @@ Batches nest — only the outermost flushes — and pending notifications are st
 1. **`Computed` functions and `Effect` bodies are synchronous.** An `await` loses the tracking context — reads after it register nothing. The types (`T Function()`) already reject `async`; do not work around it with `.then`.
 2. **Read `.value` in the `Observer` builder body.** Closures that run later — a nested `Builder`, a gesture callback — execute outside tracking and do not subscribe. The builder must also not *write* to a signal it tracks: the framework discards a rebuild marked from inside a build, so the UI would silently lag one value behind — in debug, that write throws a `FlutterError`.
 3. **An `Effect` must not write to a signal it reads.** During the first run the write falls into the void (subscriptions attach after the body runs); from the first rerun on, every self-write schedules another rerun. A self-write that converges in a few steps keeps working, but after 100 consecutive self-triggered reruns the effect assumes it will never stabilize, disposes itself and throws a `StateError` — instead of silently starving the event loop.
-4. **Dispose is yours.** `Signal`, `Computed` and `Effect` have owners: whoever creates them disposes them.
+4. **Dispose is yours.** `Signal`, `Computed` and `Effect` have owners: whoever creates them disposes them. Never dispose one from inside a listener it is notifying — `ChangeNotifier` asserts against mutating its listener list mid-notification. Disposing a *different* node while the propagation runs is safe: its pending notification is dropped and its reconciliation skipped.
+5. **A listener that writes back to what notified it must converge.** Writing from a listener is allowed and settles in the same propagation, but if every round schedules another one the propagation throws a `StateError` after 100 rounds — the same cutoff `Effect` uses, and for the same reason: hanging the isolate is the worst failure mode, since it leaves no trace.
 
 ## Design Decisions
 
