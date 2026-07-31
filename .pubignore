@@ -28,9 +28,13 @@ analysis_options.yaml
 .superpowers/
 .metadata
 scripts/
+CONTRIBUTING.md
+.github/
+.vscode/
+.fvm/
+.fvmrc
 
 example/pubspec.lock
-example/test/
 example/android/
 example/ios/
 example/linux/
