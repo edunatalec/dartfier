@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-TOTAL_STEPS=10
+TOTAL_STEPS=11
 STEP=0
 step() {
   STEP=$((STEP + 1))
@@ -31,6 +31,9 @@ if [ "$README_VERSION" != "$VERSION" ]; then
 fi
 
 echo "README pinned at dartfier ^${README_VERSION} ✓"
+
+step "Analyzing"
+flutter analyze
 
 step "Running tests"
 flutter test
