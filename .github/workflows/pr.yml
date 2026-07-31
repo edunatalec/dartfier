@@ -40,7 +40,7 @@ jobs:
       - name: Read the SDK floor from pubspec.yaml
         id: floor
         run: |
-          FLOOR=$(grep -E "^  flutter: '>=" pubspec.yaml | sed -E "s/.*>=([0-9]+\.[0-9]+\.[0-9]+).*/\1/")
+          FLOOR=$(grep -E "^  flutter:" pubspec.yaml | grep -oE "[0-9]+\.[0-9]+\.[0-9]+" | head -n1)
           echo "Floor declared in pubspec.yaml: $FLOOR"
           echo "version=$FLOOR" >> "$GITHUB_OUTPUT"
 
