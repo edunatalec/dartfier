@@ -1,0 +1,15 @@
+dartdoc:
+  categories:
+    Core:
+      displayName: Core
+      markdown: doc/core.md
+    Widgets:
+      displayName: Widgets
+      markdown: doc/widgets.md
+    Async:
+      displayName: Async
+      markdown: doc/async.md
+    Utilities:
+      displayName: Utilities
+      markdown: doc/utilities.md
+  categoryOrder: [Core, Widgets, Async, Utilities]

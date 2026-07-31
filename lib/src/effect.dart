@@ -1,11 +1,18 @@
+/// @docImport 'package:dartfier/dartfier.dart';
+library;
+
 import 'dart:async';
 
 import 'tracker.dart';
 
 /// A cleanup callback registered by an [Effect] run.
+///
+/// {@category Utilities}
 typedef EffectCleanup = void Function();
 
 /// A reactive side effect with automatic dependency tracking.
+///
+/// {@category Utilities}
 ///
 /// The body runs synchronously on creation and reruns whenever a value it
 /// read changes. Reruns are coalesced through the microtask queue: a burst of
@@ -16,8 +23,14 @@ typedef EffectCleanup = void Function();
 /// resources opened by the previous run.
 ///
 /// ```dart
+/// final Signal<Duration> period = Signal(const Duration(seconds: 1));
+///
 /// final Effect ticker = Effect((onCleanup) {
-///   final Timer timer = Timer.periodic(period.value, onTick);
+///   final Timer timer = Timer.periodic(
+///     period.value,
+///     (_) => debugPrint('tick'),
+///   );
+///
 ///   onCleanup(timer.cancel);
 /// });
 ///
@@ -25,13 +38,20 @@ typedef EffectCleanup = void Function();
 /// ```
 ///
 /// The body must be synchronous — reads after an `await` are not tracked.
-/// An effect must not write to a signal it reads — consult it with `peek`
-/// instead. During the first run such a write is ignored; from the first
-/// rerun on, every self-write schedules another rerun, and after 100
-/// consecutive self-triggered reruns the effect assumes it will never
-/// stabilize, disposes itself and throws a [StateError]. A self-write that
-/// converges before that — a state machine settling in a few steps — keeps
-/// working.
+/// An effect must not write to a signal it reads — consult it with
+/// [ReadonlySignal.peek] instead. During the first run such a write is
+/// ignored; from the first rerun on, every self-write schedules another
+/// rerun, and after 100 consecutive self-triggered reruns the effect assumes
+/// it will never stabilize, disposes itself and throws a [StateError]. A
+/// self-write that converges before that — a state machine settling in a few
+/// steps — keeps working.
+///
+/// See also:
+///
+///  * [ReadonlySignalSubscriptions.listen], an effect that also receives the
+///    previous value.
+///  * [Observer], which does the same job for a widget subtree.
+///  * [untracked], to read a value inside the body without depending on it.
 class Effect {
   /// Creates the effect and runs its body immediately.
   Effect(this._run) {

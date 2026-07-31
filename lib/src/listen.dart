@@ -1,3 +1,6 @@
+/// @docImport 'package:dartfier/dartfier.dart';
+library;
+
 import 'dart:async';
 
 import 'effect.dart';
@@ -6,7 +9,9 @@ import 'untracked.dart';
 
 /// Side-effect subscriptions on any [ReadonlySignal].
 ///
-/// Available on [Signal], [Computed] and `AsyncSignal` alike: they all are
+/// {@category Utilities}
+///
+/// Available on [Signal], [Computed] and [AsyncSignal] alike: they all are
 /// [ReadonlySignal]s underneath.
 extension ReadonlySignalSubscriptions<T> on ReadonlySignal<T> {
   /// Calls [onChange] with the previous and the next value on every change.
@@ -73,10 +78,12 @@ extension ReadonlySignalSubscriptions<T> on ReadonlySignal<T> {
   /// burst, not with the intermediate one that first satisfied it.
   ///
   /// ```dart
-  /// final AsyncSignal<int> total = AsyncSignal();
+  /// final AsyncSignal<int> total = AsyncSignal<int>();
   ///
-  /// unawaited(total.run(fetchTotal));
-  /// final AsyncValue<int> loaded = await total.when((v) => v is AsyncData);
+  /// unawaited(total.run(() async => 42));
+  /// final AsyncValue<int> loaded = await total.when(
+  ///   (AsyncValue<int> value) => value is AsyncData<int>,
+  /// );
   /// ```
   ///
   /// A [condition] that throws on the initial check propagates synchronously;

@@ -1,4 +1,9 @@
+/// @docImport 'package:dartfier/dartfier.dart';
+library;
+
 /// The state of an asynchronous operation exposed as a synchronous value.
+///
+/// {@category Async}
 ///
 /// Pattern-match the four cases with a `switch`:
 ///
@@ -15,6 +20,10 @@
 /// [AsyncIdle] is the state before any operation starts. [AsyncLoading] and
 /// [AsyncError] carry the previous data through reloads, so UIs can keep
 /// showing the old value instead of flashing a spinner.
+///
+/// See also:
+///
+///  * [AsyncSignal], which publishes these states as an operation runs.
 sealed class AsyncValue<T> {
   const AsyncValue();
 
@@ -36,6 +45,8 @@ sealed class AsyncValue<T> {
 }
 
 /// No operation started yet.
+///
+/// {@category Async}
 final class AsyncIdle<T> extends AsyncValue<T> {
   /// Creates the idle state.
   const AsyncIdle();
@@ -51,6 +62,8 @@ final class AsyncIdle<T> extends AsyncValue<T> {
 }
 
 /// Operation in flight, optionally carrying the [previous] data.
+///
+/// {@category Async}
 final class AsyncLoading<T> extends AsyncValue<T> {
   /// Creates a loading state carrying the [previous] data, if any.
   const AsyncLoading({this.previous});
@@ -74,6 +87,8 @@ final class AsyncLoading<T> extends AsyncValue<T> {
 }
 
 /// Operation completed with [value].
+///
+/// {@category Async}
 final class AsyncData<T> extends AsyncValue<T> {
   /// Creates a data state holding [value].
   const AsyncData(this.value);
@@ -95,6 +110,8 @@ final class AsyncData<T> extends AsyncValue<T> {
 }
 
 /// Operation failed with [error], optionally carrying the [previous] data.
+///
+/// {@category Async}
 ///
 /// Equality compares [error] and [previous]; [stackTrace] is excluded.
 final class AsyncError<T> extends AsyncValue<T> {

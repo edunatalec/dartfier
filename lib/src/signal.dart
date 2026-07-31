@@ -2,8 +2,10 @@ part of 'readonly_signal.dart';
 
 /// A reactive value built on [ChangeNotifier].
 ///
-/// Reading [value] inside a tracked scope — an `Observer` builder, a
-/// `Computed` function or an `Effect` body — automatically subscribes the
+/// {@category Core}
+///
+/// Reading [value] inside a tracked scope — an [Observer] builder, a
+/// [Computed] function or an [Effect] body — automatically subscribes the
 /// reader. Writing notifies listeners, unless the new value is judged equal.
 ///
 /// ```dart
@@ -18,6 +20,15 @@ part of 'readonly_signal.dart';
 /// listening without writing — and [ValueListenable], so it also works with
 /// [ValueListenableBuilder], [Listenable.merge] and any Flutter API that
 /// accepts a [Listenable].
+///
+/// Disposing is the owner's job: whoever creates the signal calls [dispose],
+/// after which writes are ignored.
+///
+/// See also:
+///
+///  * [Computed], which derives a value from other reactive values.
+///  * [batch], which groups several writes into a single notification.
+///  * [AsyncSignal], a signal holding the state of asynchronous work.
 base class Signal<T> extends ChangeNotifier
     implements ReadonlySignal<T>, ReactiveSource {
   /// Creates a signal holding [initial].
@@ -58,7 +69,7 @@ base class Signal<T> extends ChangeNotifier
   /// The write is ignored when the signal is disposed or when the new value
   /// is judged equal to the current one (by `equals`, falling back to `==`).
   ///
-  /// Inside a `batch` the guard covers the group: the notification carries the
+  /// Inside a [batch] the guard covers the group: the notification carries the
   /// value the signal held when the batch first wrote to it, so a batch that
   /// moves the value and puts it back notifies nobody.
   set value(T newValue) {
@@ -103,8 +114,11 @@ base class Signal<T> extends ChangeNotifier
   /// react to.
   ///
   /// ```dart
+  /// final Signal<String> route = Signal('home');
+  /// final Signal<int> page = Signal(1);
+  ///
   /// final Effect logger = Effect(
-  ///   (_) => debugPrint('${tracked.value} (page ${page.peek()})'),
+  ///   (_) => debugPrint('${route.value} (page ${page.peek()})'),
   /// );
   /// ```
   @override

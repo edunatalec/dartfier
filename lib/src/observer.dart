@@ -1,3 +1,6 @@
+/// @docImport 'package:dartfier/dartfier.dart';
+library;
+
 import 'package:flutter/widgets.dart';
 
 import 'tracker.dart';
@@ -5,9 +8,11 @@ import 'tracker.dart';
 /// A widget that rebuilds when any reactive value read in its builder
 /// changes.
 ///
-/// The builder runs under dependency tracking: every `Signal` or `Computed`
+/// {@category Widgets}
+///
+/// The builder runs under dependency tracking: every [Signal] or [Computed]
 /// read inside it subscribes the widget, with no listenable lists and no
-/// `Listenable.merge`. Dependencies are rediscovered on every build, so
+/// [Listenable.merge]. Dependencies are rediscovered on every build, so
 /// conditional reads stay correct.
 ///
 /// ```dart
@@ -24,7 +29,7 @@ import 'tracker.dart';
 /// show stale state. In debug mode, such a write throws a [FlutterError].
 ///
 /// A foreign [Listenable] — a [FocusNode], a [ScrollController], any
-/// notifier that is not a `Signal` — is invisible to tracking. Pass it
+/// notifier that is not a [Signal] — is invisible to tracking. Pass it
 /// through [listenables] to have the observer rebuild on its notifications
 /// too, alongside the tracked reads:
 ///
@@ -34,6 +39,14 @@ import 'tracker.dart';
 ///   listenables: [focusNode],
 /// )
 /// ```
+///
+/// See also:
+///
+///  * [Observer.withChild], which keeps a heavy static subtree out of the
+///    rebuilt region.
+///  * [Effect], which does the same job outside the widget tree.
+///  * [ReadonlySignal.peek], to read a value in the builder without
+///    subscribing to it.
 class Observer extends StatefulWidget {
   /// Creates an observer that rebuilds when values read in `builder` change.
   const Observer(
@@ -74,7 +87,7 @@ class Observer extends StatefulWidget {
 
   /// Foreign [Listenable]s that also trigger a rebuild when they notify.
   ///
-  /// Auto-tracking only sees `Signal` and `Computed` reads; a plain
+  /// Auto-tracking only sees [Signal] and [Computed] reads; a plain
   /// [Listenable] consulted in the builder — a [FocusNode], a text
   /// controller — never subscribes. Listing it here subscribes the observer
   /// manually, so one widget combines tracked reads with untracked sources.

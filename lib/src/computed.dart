@@ -2,6 +2,8 @@ part of 'readonly_signal.dart';
 
 /// A derived reactive value with automatic dependency tracking.
 ///
+/// {@category Core}
+///
 /// The computation is lazy: it runs on the first read and is cached until a
 /// dependency changes. Dependencies are rediscovered on every recomputation,
 /// so conditional reads subscribe to exactly what the last run read.
@@ -25,6 +27,13 @@ part of 'readonly_signal.dart';
 ///
 /// [Computed] implements [ReadonlySignal] — expose it as such to hand
 /// readers listening without writing.
+///
+/// See also:
+///
+///  * [Signal], the writable value a computation usually reads from.
+///  * [untracked], to read a value inside the computation without depending
+///    on it.
+///  * [AsyncSignal], for derivations that need to await.
 base class Computed<T> extends ChangeNotifier
     implements ReadonlySignal<T>, ReactiveNode {
   /// Creates a computed value derived by the given function.
@@ -34,8 +43,13 @@ base class Computed<T> extends ChangeNotifier
   /// for downstream `==` checks.
   ///
   /// ```dart
-  /// final Computed<List<Chapter>> visible = Computed(
-  ///   () => filter(chapters.value, query.value),
+  /// final Signal<List<String>> chapters = Signal(<String>['one', 'two']);
+  /// final Signal<String> query = Signal('');
+  ///
+  /// final Computed<List<String>> visible = Computed(
+  ///   () => chapters.value
+  ///       .where((String chapter) => chapter.contains(query.value))
+  ///       .toList(),
   ///   equals: listEquals,
   /// );
   /// ```
@@ -80,6 +94,9 @@ base class Computed<T> extends ChangeNotifier
   /// Still recomputes if the cached value is stale.
   ///
   /// ```dart
+  /// final Signal<int> count = Signal(1);
+  /// final Computed<int> doubled = Computed(() => count.value * 2);
+  ///
   /// final Computed<int> shifted = Computed(() => doubled.peek() + 1);
   /// ```
   @override
