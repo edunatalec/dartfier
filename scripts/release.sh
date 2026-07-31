@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-TOTAL_STEPS=8
+TOTAL_STEPS=10
 STEP=0
 step() {
   STEP=$((STEP + 1))
@@ -35,11 +35,24 @@ echo "README pinned at dartfier ^${README_VERSION} ✓"
 step "Running tests"
 flutter test
 
+step "Verifying the examples inside the API docs"
+./scripts/verify_doc_examples.sh
+
+step "Generating API docs"
+DOC_OUT=$(mktemp -d)
+dart doc --output "$DOC_OUT" 2>&1 | tee /dev/stderr | grep -q "Found 0 warnings and 0 errors" || {
+  echo
+  echo "❌ Aborting release: 'dart doc' reported warnings or errors."
+  rm -rf "$DOC_OUT"
+  exit 1
+}
+rm -rf "$DOC_OUT"
+
 step "Validating package (dry-run)"
 flutter pub publish --dry-run
 
 step "Running pana (pub.dev score)"
-PANA_OUT=$(pana --no-warning . | tee /dev/stderr)
+PANA_OUT=$(GIT_ASKPASS= GIT_TERMINAL_PROMPT=0 pana --no-warning . | tee /dev/stderr)
 if ! grep -q "Points: 160/160" <<<"$PANA_OUT"; then
   echo
   echo "❌ Aborting release: pana score is below 160/160. Fix the issues above."

@@ -29,6 +29,7 @@ CLAUDE.md
 # Libraries should not include pubspec.lock, per https://dart.dev/guides/libraries/private-files#pubspeclock.
 /pubspec.lock
 **/doc/api/
+doc_examples_tmp/
 .dart_tool/
 .flutter-plugins-dependencies
 /build/
