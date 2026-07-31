@@ -70,6 +70,64 @@ void main() {
 
       expect(count, isA<ValueListenable<int>>());
     });
+
+    test('stays silent when the held collection is mutated in place', () {
+      final Signal<List<int>> items = Signal(<int>[1, 2]);
+      int notifications = 0;
+
+      items.addListener(() => notifications += 1);
+
+      items.value.add(3);
+
+      expect(items.value, [1, 2, 3]);
+      expect(notifications, 0);
+
+      items.value = <int>[...items.value];
+
+      expect(notifications, 1);
+    });
+
+    test('stays silent when the same list instance is reassigned', () {
+      final Signal<List<int>> items = Signal(<int>[1, 2]);
+      int notifications = 0;
+
+      items.addListener(() => notifications += 1);
+
+      final List<int> held = items.value;
+      held.add(3);
+      items.value = held;
+
+      expect(notifications, 0);
+    });
+
+    test('stays silent when the held map is mutated in place', () {
+      final Signal<Map<String, int>> scores = Signal(<String, int>{'a': 1});
+      int notifications = 0;
+
+      scores.addListener(() => notifications += 1);
+
+      scores.value['b'] = 2;
+
+      expect(scores.value, {'a': 1, 'b': 2});
+      expect(notifications, 0);
+
+      scores.value = <String, int>{...scores.value};
+
+      expect(notifications, 1);
+    });
+
+    test('a custom equals does not rescue an in-place mutation', () {
+      final Signal<List<int>> items = Signal(<int>[1, 2], equals: listEquals);
+      int notifications = 0;
+
+      items.addListener(() => notifications += 1);
+
+      final List<int> held = items.value;
+      held.add(3);
+      items.value = held;
+
+      expect(notifications, 0);
+    });
   });
 
   group('Signal.update', () {

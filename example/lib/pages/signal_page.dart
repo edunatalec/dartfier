@@ -20,6 +20,8 @@ class _SignalPageState extends State<SignalPage> {
   final _items = Signal(const [1, 2, 3], equals: listEquals);
   final _itemsNotifications = Signal(0);
 
+  final _mutable = Signal<List<int>>([1, 2, 3]);
+
   @override
   void initState() {
     super.initState();
@@ -30,6 +32,7 @@ class _SignalPageState extends State<SignalPage> {
 
   @override
   void dispose() {
+    _mutable.dispose();
     _items.dispose();
     _itemsNotifications.dispose();
     _guarded.dispose();
@@ -69,6 +72,14 @@ class _SignalPageState extends State<SignalPage> {
 
   void _onAppendTap() {
     _items.value = [..._items.value, _items.value.length + 1];
+  }
+
+  void _onMutateInPlaceTap() {
+    _mutable.value.add(_mutable.value.length + 1);
+  }
+
+  void _onReassignTap() {
+    _mutable.value = [..._mutable.value];
   }
 
   @override
@@ -176,6 +187,41 @@ class _SignalPageState extends State<SignalPage> {
                 FilledButton.tonal(
                   onPressed: _onAppendTap,
                   child: const Text('Append'),
+                ),
+              ],
+            ),
+            const Divider(height: 48),
+            const SectionTitle('Mutating in place does nothing'),
+            const SizedBox(height: 8),
+            const InfoCard(
+              'Exactly like ValueNotifier: a Signal notifies on assignment, '
+              'not on what you do to the object it holds. Press "Mutate '
+              '(.add)" a few times — the list below never changes, because '
+              'the signal was never written to. Then press "Reassign" and '
+              'every hidden mutation appears at once: they were always there, '
+              'just invisible. Replace the collection instead: '
+              'items.value = [...items.value, next].',
+            ),
+            const SizedBox(height: 16),
+            Observer(
+              (context) => Text(
+                'mutable: ${_mutable.value}',
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                FilledButton.tonal(
+                  onPressed: _onMutateInPlaceTap,
+                  child: const Text('Mutate (.add)'),
+                ),
+                FilledButton.tonal(
+                  onPressed: _onReassignTap,
+                  child: const Text('Reassign'),
                 ),
               ],
             ),

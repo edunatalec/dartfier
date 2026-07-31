@@ -5,9 +5,7 @@ Fine-grained reactivity for Flutter, built entirely on `ChangeNotifier`:
 `Signal`, `Computed`, `Effect` and an auto-tracking `Observer` widget.
 
 Flutter only, zero dependencies, no code generation, full `ValueListenable`
-interop. It ships no observable collections, no `context.watch()` and no async
-`Computed` — those gaps are deliberate, and
-[Design decisions](#design-decisions) says what to use instead.
+interop.
 
 ## Requirements
 
@@ -49,7 +47,6 @@ one.
 - [API](#api)
 - [Semantics](#semantics)
 - [Rules of use](#rules-of-use)
-- [Design decisions](#design-decisions)
 - [License](#license)
 
 ## Why dartfier?
@@ -83,6 +80,26 @@ final Signal<List<int>> items = Signal([1, 2], equals: listEquals);
 items.value = [1, 2]; // equal by listEquals — listeners not notified
 items.value = [1, 2, 3]; // notifies
 ```
+
+**Collections are replaced, never mutated in place.** Like `ValueNotifier`, a
+`Signal` notifies on assignment, not on what you do to the object it holds —
+`items.value.add(4)` changes the list and notifies nobody, because the signal
+never saw a write. Assign a new collection instead:
+
+```dart
+final Signal<List<int>> items = Signal([1, 2]);
+
+items.value.add(3); // silent — the widget will not rebuild
+items.value = [...items.value, 3]; // notifies
+
+final Signal<Map<String, int>> scores = Signal({'a': 1});
+
+scores.value = {...scores.value, 'b': 2}; // same rule for maps and sets
+```
+
+The write is swallowed rather than rejected because the equality guard sees the
+same object on both sides. `equals: listEquals` changes what counts as equal, not
+this: a mutated list is still the very same list.
 
 `update()` derives the next value from the current one, reading it with
 `peek()` — so calling it inside a tracked scope does not subscribe that scope
@@ -405,51 +422,6 @@ queue, so effects never observe a diamond glitch.
    every round schedules another one the propagation throws a `StateError`
    after 100 rounds — the same cutoff `Effect` uses, and for the same reason:
    hanging the isolate is the worst failure mode, since it leaves no trace.
-
-## Design decisions
-
-Deliberate gaps, not missing features:
-
-- **No observable collections.** An equality guard and in-place mutation
-  cannot coexist: a mutated list is identical to itself, so the write would be
-  silently swallowed. The supported pattern is the immutable snapshot —
-  `items.value = [...items.value, next]` — with `equals: listEquals` when
-  notification cuts matter.
-- **No `context.watch()`.** Subscribing an `Element` from a getter requires
-  either retaining unmounted elements until the next notification or
-  weak-reference/finalizer machinery — both at odds with a core meant to be
-  read in one sitting. `Observer` does the same job explicitly, one widget
-  away.
-- **No async compute.** A `Computed` that awaits would silently stop tracking
-  everything read after the first `await`. Async enters through
-  [`AsyncSignal`](#asyncsignal), where the fetcher runs outside the graph and
-  writes back.
-- **No `debounce`/`throttle`.** Timing policy belongs at the call site: a real
-  debounce needs cancelling and flushing, both of which depend on what the
-  effect is for. An `Effect` and its cleanup registrar already express it in
-  three lines, with cancellation included:
-
-  ```dart
-  Effect((onCleanup) {
-    final String text = query.value;
-    final Timer timer = Timer(
-      const Duration(milliseconds: 300),
-      () => search(text),
-    );
-    onCleanup(timer.cancel);
-  });
-  ```
-
-- **No event primitive.** A signal holds state, not a sequence in time — every
-  value is observable at any moment, and an event that fires twice with the
-  same payload is not. For a command signal, opt out of the equality guard:
-  `Signal<String>('', equals: (_, _) => false)` notifies on every write, the
-  same trick Solid's `{ equals: false }` uses. Streams remain the right tool
-  for genuine event sequences.
-- **No `select()`.** `Computed` already is the select:
-  `Computed(() => user.value.name)` recomputes lazily, notifies only its
-  readers and tracks exactly what it read — a dedicated API would be the same
-  object with a narrower name. Solidart shipped one and removed it.
 
 ## License
 
