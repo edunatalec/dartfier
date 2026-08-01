@@ -15,6 +15,7 @@ import 'recipes/cart/cart_page.dart';
 import 'recipes/gated_action/gated_action_page.dart';
 import 'recipes/search/search_page.dart';
 import 'recipes/session/session_page.dart';
+import 'recipes/startup/startup_page.dart';
 
 void main() => runApp(const ExampleApp());
 
@@ -115,6 +116,11 @@ class HomePage extends StatelessWidget {
         title: 'Action with a prerequisite',
         subtitle: 'Why when — awaiting readiness inside a handler',
         page: GatedActionPage(),
+      ),
+      _Example(
+        title: 'Startup gate',
+        subtitle: 'when across actors — a plain Signal filled by an event',
+        page: StartupPage(),
       ),
     ];
 

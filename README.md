@@ -314,19 +314,30 @@ with `peek()`, so an already-satisfied condition completes immediately,
 without subscribing to anything.
 
 ```dart
-unawaited(results.run(() => api.search(query.value)));
+final int reached = await progress.when((value) => value >= 5);
+```
 
+It is for whoever needs a state but did not put it there. A handler that both
+starts the work and awaits it does not need `when` — `await results.run(...)`
+says the same thing with fewer moving parts. The gain shows up when the two
+are different places:
+
+```dart
 final AsyncValue<List<Book>> loaded = await results.when(
   (value) => value is AsyncData<List<Book>>,
 );
 ```
 
-Useful in tests and in orchestration — "wait until it is loaded, then
-continue". Changes are observed through `listen`, so a synchronous burst
-completes the future with the value at the end of the burst. There is no
-built-in timeout: while the condition is never satisfied — including after the
-signal is disposed — the future never completes, so wrap the call in
-`Future.timeout` when that matters.
+Called from a share button while the screen is already loading, this waits for
+the request in flight instead of starting a second one — and returns at once if
+the data already arrived. Calling `run` again would do neither: `run` is
+latest-wins, so the outcome of the older call would be dropped.
+
+Changes are observed through `listen`, so a synchronous burst completes the
+future with the value at the end of the burst. There is no built-in timeout:
+while the condition is never satisfied — including after the signal is
+disposed — the future never completes, so wrap the call in `Future.timeout`
+when that matters.
 
 ### Watch
 

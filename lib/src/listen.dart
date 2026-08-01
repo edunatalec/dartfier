@@ -78,13 +78,19 @@ extension ReadonlySignalSubscriptions<T> on ReadonlySignal<T> {
   /// burst, not with the intermediate one that first satisfied it.
   ///
   /// ```dart
-  /// final AsyncSignal<int> total = AsyncSignal<int>();
+  /// final Signal<int> progress = Signal(0);
   ///
-  /// unawaited(total.run(() async => 42));
-  /// final AsyncValue<int> loaded = await total.when(
-  ///   (AsyncValue<int> value) => value is AsyncData<int>,
-  /// );
+  /// Timer(const Duration(seconds: 1), () => progress.value = 5);
+  ///
+  /// final int reached = await progress.when((int value) => value >= 5);
   /// ```
+  ///
+  /// It is for whoever needs a state but did not put it there — a handler
+  /// awaiting data another screen is already loading, or a test waiting for a
+  /// store to settle. A caller that both starts the work and awaits it does
+  /// not need this: `await signal.run(fetch)` says the same thing with fewer
+  /// moving parts, while [when] waits for the work already in flight instead
+  /// of starting a second one.
   ///
   /// A [condition] that throws on the initial check propagates synchronously;
   /// one that throws on a change completes the future with that error and

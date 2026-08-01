@@ -13,6 +13,8 @@ class ListenWhenPage extends StatefulWidget {
 }
 
 class _ListenWhenPageState extends State<ListenWhenPage> {
+  static const int _threshold = 5;
+
   final _count = Signal(0);
   late final _isEven = Computed(() => _count.value.isEven);
   final _changes = Signal(const <String>[]);
@@ -79,15 +81,33 @@ class _ListenWhenPageState extends State<ListenWhenPage> {
     return 42;
   }
 
-  Future<void> _onAwaitDataTap() async {
-    _logAwaited('run started — awaiting AsyncData');
+  void _onStartFetchTap() {
+    _logAwaited('fetch started');
     unawaited(_total.run(_fetchTotal));
+  }
+
+  Future<void> _onAwaitDataTap() async {
+    final bool alreadyLoaded = _total.peek() is AsyncData<int>;
+
+    _logAwaited(
+      alreadyLoaded
+          ? 'awaiting — already loaded, completes immediately'
+          : 'awaiting AsyncData',
+    );
 
     final AsyncValue<int> loaded = await _total.when(
       (value) => value is AsyncData<int>,
     );
 
     _logAwaited('when completed with ${loaded.valueOrNull}');
+  }
+
+  Future<void> _onAwaitThresholdTap() async {
+    _logAwaited('awaiting count >= $_threshold — press +1 above');
+
+    final int reached = await _count.when((value) => value >= _threshold);
+
+    _logAwaited('count reached $reached');
   }
 
   @override
@@ -154,12 +174,16 @@ class _ListenWhenPageState extends State<ListenWhenPage> {
               const SizedBox(height: 8),
               const InfoCard(
                 'when completes a Future with the first value that satisfies a '
-                'condition — the current value is checked first, so an '
-                'already-satisfied condition completes immediately without '
-                'subscribing to anything. Here a fetch starts and the handler '
-                'simply awaits AsyncData, no listener bookkeeping in sight. '
-                'There is no built-in timeout: wrap the call in Future.timeout '
-                'when the condition may never be satisfied.',
+                'condition, checking the current one first with peek(): an '
+                'already-satisfied condition completes immediately, without '
+                'subscribing to anything. Starting and awaiting are separate '
+                'buttons on purpose — when is for whoever needs the outcome '
+                'but did not start the work; awaiting from the handler that '
+                'starts it is just await run(), with extra steps. "Await count '
+                '>= 5" is the other half: a condition that is not "it loaded", '
+                'which no await on a fetch could express. There is no built-in '
+                'timeout — wrap the call in Future.timeout when the condition '
+                'may never be satisfied.',
               ),
               const SizedBox(height: 16),
               Observer(
@@ -175,11 +199,24 @@ class _ListenWhenPageState extends State<ListenWhenPage> {
                 ),
               ),
               const SizedBox(height: 8),
-              Center(
-                child: FilledButton.tonal(
-                  onPressed: _onAwaitDataTap,
-                  child: const Text('Fetch and await AsyncData'),
-                ),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonal(
+                    onPressed: _onStartFetchTap,
+                    child: const Text('Start fetch'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: _onAwaitDataTap,
+                    child: const Text('Await AsyncData'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: _onAwaitThresholdTap,
+                    child: const Text('Await count >= 5'),
+                  ),
+                ],
               ),
             ],
           ),
