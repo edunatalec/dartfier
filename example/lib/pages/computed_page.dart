@@ -85,124 +85,127 @@ class _ComputedPageState extends State<ComputedPage> {
       appBar: AppBar(title: const Text('Computed')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SectionTitle('Derived values'),
-            const SizedBox(height: 8),
-            const InfoCard(
-              'Computed(() => price.value * quantity.value) derives a value '
-              'from any reactive read and recomputes when a dependency '
-              'changes. Reads are always consistent: any read after any '
-              'notification sees current state.',
-            ),
-            const SizedBox(height: 16),
-            Observer(
-              (context) => Text(
-                'price: ${_price.value.toStringAsFixed(2)} × '
-                'quantity: ${_quantity.value} = '
-                '${_total.value.toStringAsFixed(2)}',
-                style: Theme.of(context).textTheme.headlineSmall,
-                textAlign: TextAlign.center,
+        child: SafeArea(
+          top: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SectionTitle('Derived values'),
+              const SizedBox(height: 8),
+              const InfoCard(
+                'Computed(() => price.value * quantity.value) derives a value '
+                'from any reactive read and recomputes when a dependency '
+                'changes. Reads are always consistent: any read after any '
+                'notification sees current state.',
               ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              spacing: 12,
-              children: [
-                const Text('price'),
-                IconButton.filledTonal(
-                  onPressed: _onPriceDecrementTap,
-                  icon: const Icon(Icons.remove),
+              const SizedBox(height: 16),
+              Observer(
+                (context) => Text(
+                  'price: ${_price.value.toStringAsFixed(2)} × '
+                  'quantity: ${_quantity.value} = '
+                  '${_total.value.toStringAsFixed(2)}',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                  textAlign: TextAlign.center,
                 ),
-                IconButton.filledTonal(
-                  onPressed: _onPriceIncrementTap,
-                  icon: const Icon(Icons.add),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              spacing: 12,
-              children: [
-                const Text('quantity'),
-                IconButton.filledTonal(
-                  onPressed: _onQuantityDecrementTap,
-                  icon: const Icon(Icons.remove),
-                ),
-                IconButton.filledTonal(
-                  onPressed: _onQuantityIncrementTap,
-                  icon: const Icon(Icons.add),
-                ),
-              ],
-            ),
-            const Divider(height: 48),
-            const SectionTitle('Lazy, cached, recomputed on demand'),
-            const SizedBox(height: 8),
-            const InfoCard(
-              'Staleness first, notifications last: a write marks the graph '
-              'stale, and only a Computed someone listens to resolves itself '
-              'and notifies. Stepping price or quantity above runs the '
-              'compute once per change, while extra rebuilds read the cache '
-              '— "Rebuild page" leaves the run count untouched.',
-            ),
-            const SizedBox(height: 16),
-            Observer((context) {
-              final double total = _total.value;
-
-              return Text(
-                'total: ${total.toStringAsFixed(2)} — '
-                'computed ran $_totalRuns times',
-                textAlign: TextAlign.center,
-              );
-            }),
-            const SizedBox(height: 8),
-            Center(
-              child: FilledButton.tonal(
-                onPressed: _onRebuildTap,
-                child: const Text('Rebuild page'),
               ),
-            ),
-            const Divider(height: 48),
-            const SectionTitle('equals decides what counts as a change'),
-            const SizedBox(height: 8),
-            const InfoCard.highlight(
-              'A Computed only notifies when its value actually changes, and '
-              'equals: listEquals is what "changes" means here. "Add odd" '
-              'writes a new list into the signal, the Computed recomputes and '
-              'lands on an equal list — so nothing propagates and this '
-              'section does not rebuild. "Add even" produces a genuinely '
-              'different list and rebuilds it.',
-            ),
-            const SizedBox(height: 16),
-            Observer((context) {
-              final List<int> current = _evens.value;
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 12,
+                children: [
+                  const Text('price'),
+                  IconButton.filledTonal(
+                    onPressed: _onPriceDecrementTap,
+                    icon: const Icon(Icons.remove),
+                  ),
+                  IconButton.filledTonal(
+                    onPressed: _onPriceIncrementTap,
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 12,
+                children: [
+                  const Text('quantity'),
+                  IconButton.filledTonal(
+                    onPressed: _onQuantityDecrementTap,
+                    icon: const Icon(Icons.remove),
+                  ),
+                  IconButton.filledTonal(
+                    onPressed: _onQuantityIncrementTap,
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
+              ),
+              const Divider(height: 48),
+              const SectionTitle('Lazy, cached, recomputed on demand'),
+              const SizedBox(height: 8),
+              const InfoCard(
+                'Staleness first, notifications last: a write marks the graph '
+                'stale, and only a Computed someone listens to resolves itself '
+                'and notifies. Stepping price or quantity above runs the '
+                'compute once per change, while extra rebuilds read the cache '
+                '— "Rebuild page" leaves the run count untouched.',
+              ),
+              const SizedBox(height: 16),
+              Observer((context) {
+                final double total = _total.value;
 
-              _evensBuilds++;
+                return Text(
+                  'total: ${total.toStringAsFixed(2)} — '
+                  'computed ran $_totalRuns times',
+                  textAlign: TextAlign.center,
+                );
+              }),
+              const SizedBox(height: 8),
+              Center(
+                child: FilledButton.tonal(
+                  onPressed: _onRebuildTap,
+                  child: const Text('Rebuild page'),
+                ),
+              ),
+              const Divider(height: 48),
+              const SectionTitle('equals decides what counts as a change'),
+              const SizedBox(height: 8),
+              const InfoCard.highlight(
+                'A Computed only notifies when its value actually changes, and '
+                'equals: listEquals is what "changes" means here. "Add odd" '
+                'writes a new list into the signal, the Computed recomputes and '
+                'lands on an equal list — so nothing propagates and this '
+                'section does not rebuild. "Add even" produces a genuinely '
+                'different list and rebuilds it.',
+              ),
+              const SizedBox(height: 16),
+              Observer((context) {
+                final List<int> current = _evens.value;
 
-              return Text(
-                'evens: $current — this section built $_evensBuilds times',
-                textAlign: TextAlign.center,
-              );
-            }),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              spacing: 12,
-              children: [
-                FilledButton.tonal(
-                  onPressed: _onAddOddTap,
-                  child: const Text('Add odd'),
-                ),
-                FilledButton.tonal(
-                  onPressed: _onAddEvenTap,
-                  child: const Text('Add even'),
-                ),
-              ],
-            ),
-          ],
+                _evensBuilds++;
+
+                return Text(
+                  'evens: $current — this section built $_evensBuilds times',
+                  textAlign: TextAlign.center,
+                );
+              }),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 12,
+                children: [
+                  FilledButton.tonal(
+                    onPressed: _onAddOddTap,
+                    child: const Text('Add odd'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: _onAddEvenTap,
+                    child: const Text('Add even'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

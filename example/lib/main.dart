@@ -114,20 +114,23 @@ class HomePage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('dartfier Examples'), centerTitle: true),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: 16),
-        children: [
-          const _SectionHeader(
-            title: 'API tour',
-            subtitle: 'One page per feature, with the guarantees on screen',
-          ),
-          ...apiTour.map((example) => _ExampleTile(example)),
-          const _SectionHeader(
-            title: 'Real-world recipes',
-            subtitle: 'Screens you would actually ship, and why each API',
-          ),
-          ...recipes.map((example) => _ExampleTile(example)),
-        ],
+      body: SafeArea(
+        top: false,
+        child: ListView(
+          padding: const EdgeInsets.only(bottom: 16),
+          children: [
+            const _SectionHeader(
+              title: 'API tour',
+              subtitle: 'One page per feature, with the guarantees on screen',
+            ),
+            ...apiTour.map((example) => _ExampleTile(example)),
+            const _SectionHeader(
+              title: 'Real-world recipes',
+              subtitle: 'Screens you would actually ship, and why each API',
+            ),
+            ...recipes.map((example) => _ExampleTile(example)),
+          ],
+        ),
       ),
     );
   }

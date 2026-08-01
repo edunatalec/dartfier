@@ -84,89 +84,92 @@ class _EffectPageState extends State<EffectPage> {
       appBar: AppBar(title: const Text('Effect')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SectionTitle('A ticker with cleanup'),
-            const SizedBox(height: 8),
-            const InfoCard(
-              'Effect runs its body synchronously on creation and reruns '
-              'when a value it read changes. This one reads the period '
-              'signal, starts a Timer.periodic, and registers onCleanup to '
-              'cancel it — cleanups run in reverse order before every rerun '
-              'and on dispose(). The body appends to the log through peek(): '
-              'an effect must never read a signal it writes, or every rerun '
-              'schedules the next one — after 100 consecutive self-triggered '
-              'reruns the effect disposes itself and throws a StateError.',
-            ),
-            const SizedBox(height: 16),
-            Observer((context) => EventLog(entries: _log.value)),
-            const SizedBox(height: 8),
-            Observer(
-              (context) => Center(
-                child: SegmentedButton<Duration>(
-                  segments: const [
-                    ButtonSegment(
-                      value: Duration(milliseconds: 500),
-                      label: Text('500ms'),
-                    ),
-                    ButtonSegment(
-                      value: Duration(seconds: 1),
-                      label: Text('1s'),
-                    ),
-                    ButtonSegment(
-                      value: Duration(seconds: 2),
-                      label: Text('2s'),
-                    ),
-                  ],
-                  selected: {_period.value},
-                  onSelectionChanged: _onPeriodChanged,
+        child: SafeArea(
+          top: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SectionTitle('A ticker with cleanup'),
+              const SizedBox(height: 8),
+              const InfoCard(
+                'Effect runs its body synchronously on creation and reruns '
+                'when a value it read changes. This one reads the period '
+                'signal, starts a Timer.periodic, and registers onCleanup to '
+                'cancel it — cleanups run in reverse order before every rerun '
+                'and on dispose(). The body appends to the log through peek(): '
+                'an effect must never read a signal it writes, or every rerun '
+                'schedules the next one — after 100 consecutive self-triggered '
+                'reruns the effect disposes itself and throws a StateError.',
+              ),
+              const SizedBox(height: 16),
+              Observer((context) => EventLog(entries: _log.value)),
+              const SizedBox(height: 8),
+              Observer(
+                (context) => Center(
+                  child: SegmentedButton<Duration>(
+                    segments: const [
+                      ButtonSegment(
+                        value: Duration(milliseconds: 500),
+                        label: Text('500ms'),
+                      ),
+                      ButtonSegment(
+                        value: Duration(seconds: 1),
+                        label: Text('1s'),
+                      ),
+                      ButtonSegment(
+                        value: Duration(seconds: 2),
+                        label: Text('2s'),
+                      ),
+                    ],
+                    selected: {_period.value},
+                    onSelectionChanged: _onPeriodChanged,
+                  ),
                 ),
               ),
-            ),
-            const Divider(height: 48),
-            const SectionTitle('Reruns coalesce per microtask'),
-            const SizedBox(height: 8),
-            const InfoCard(
-              'Reruns are scheduled through the microtask queue, so a burst '
-              'of synchronous writes produces a single rerun reading '
-              'consistent state. This button writes the period twice back to '
-              'back — the log shows one cleanup and one restart, not two, '
-              'and the effect only ever sees the final value.',
-            ),
-            const SizedBox(height: 16),
-            Center(
-              child: FilledButton.tonal(
-                onPressed: _onBurstTap,
-                child: const Text('Burst: 500ms then 2s'),
+              const Divider(height: 48),
+              const SectionTitle('Reruns coalesce per microtask'),
+              const SizedBox(height: 8),
+              const InfoCard(
+                'Reruns are scheduled through the microtask queue, so a burst '
+                'of synchronous writes produces a single rerun reading '
+                'consistent state. This button writes the period twice back to '
+                'back — the log shows one cleanup and one restart, not two, '
+                'and the effect only ever sees the final value.',
               ),
-            ),
-            const Divider(height: 48),
-            const SectionTitle('Dispose is yours'),
-            const SizedBox(height: 8),
-            const InfoCard(
-              'Whoever creates an Effect disposes it — nothing happens '
-              'automatically. dispose() runs the pending cleanups, so the '
-              'log shows the final cancel, and any scheduled rerun is '
-              'dropped. Recreate builds a fresh Effect, which runs its first '
-              'body synchronously and starts ticking again.',
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              spacing: 12,
-              children: [
-                FilledButton.tonal(
-                  onPressed: _onDisposeTap,
-                  child: const Text('Dispose'),
+              const SizedBox(height: 16),
+              Center(
+                child: FilledButton.tonal(
+                  onPressed: _onBurstTap,
+                  child: const Text('Burst: 500ms then 2s'),
                 ),
-                FilledButton.tonal(
-                  onPressed: _onRecreateTap,
-                  child: const Text('Recreate'),
-                ),
-              ],
-            ),
-          ],
+              ),
+              const Divider(height: 48),
+              const SectionTitle('Dispose is yours'),
+              const SizedBox(height: 8),
+              const InfoCard(
+                'Whoever creates an Effect disposes it — nothing happens '
+                'automatically. dispose() runs the pending cleanups, so the '
+                'log shows the final cancel, and any scheduled rerun is '
+                'dropped. Recreate builds a fresh Effect, which runs its first '
+                'body synchronously and starts ticking again.',
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 12,
+                children: [
+                  FilledButton.tonal(
+                    onPressed: _onDisposeTap,
+                    child: const Text('Dispose'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: _onRecreateTap,
+                    child: const Text('Recreate'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

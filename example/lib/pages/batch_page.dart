@@ -102,83 +102,86 @@ class _BatchPageState extends State<BatchPage> {
       appBar: AppBar(title: const Text('batch')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SectionTitle('An unbatched group leaks its middle'),
-            const SizedBox(height: 8),
-            const InfoCard.highlight(
-              'Swapping two signals passes through a state that never existed '
-              'logically. "Swap loose" writes them one at a time and a raw '
-              'listener on the Computed sees BB before BA. "Swap batched" '
-              'notifies once, at the end — only the final value escapes.',
-            ),
-            const SizedBox(height: 16),
-            Observer(
-              (context) => Text(
-                'pair: ${_pair.value}',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall,
+        child: SafeArea(
+          top: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SectionTitle('An unbatched group leaks its middle'),
+              const SizedBox(height: 8),
+              const InfoCard.highlight(
+                'Swapping two signals passes through a state that never existed '
+                'logically. "Swap loose" writes them one at a time and a raw '
+                'listener on the Computed sees BB before BA. "Swap batched" '
+                'notifies once, at the end — only the final value escapes.',
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'listener observed: ${_observed.isEmpty ? '—' : _observed.join(' → ')}',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                FilledButton.tonal(
-                  onPressed: _onSwapLooseTap,
-                  child: const Text('Swap loose'),
+              const SizedBox(height: 16),
+              Observer(
+                (context) => Text(
+                  'pair: ${_pair.value}',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
-                FilledButton.tonal(
-                  onPressed: _onSwapBatchedTap,
-                  child: const Text('Swap batched'),
-                ),
-              ],
-            ),
-            const Divider(height: 48),
-            const SectionTitle('One reconciliation instead of three'),
-            const SizedBox(height: 8),
-            const InfoCard(
-              'A Computed reconciles once per write. Clearing three filters '
-              'loose runs the derivation three times to reach one result; '
-              'inside a batch it runs once. Restore also batches, so the run '
-              'count stays at one either way.',
-            ),
-            const SizedBox(height: 16),
-            Observer(
-              (context) => Text(
-                '${_summary.value} — derivation ran $_filterRuns times',
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'listener observed: ${_observed.isEmpty ? '—' : _observed.join(' → ')}',
                 textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                FilledButton.tonal(
-                  onPressed: _onClearLooseTap,
-                  child: const Text('Clear loose'),
+              const SizedBox(height: 8),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonal(
+                    onPressed: _onSwapLooseTap,
+                    child: const Text('Swap loose'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: _onSwapBatchedTap,
+                    child: const Text('Swap batched'),
+                  ),
+                ],
+              ),
+              const Divider(height: 48),
+              const SectionTitle('One reconciliation instead of three'),
+              const SizedBox(height: 8),
+              const InfoCard(
+                'A Computed reconciles once per write. Clearing three filters '
+                'loose runs the derivation three times to reach one result; '
+                'inside a batch it runs once. Restore also batches, so the run '
+                'count stays at one either way.',
+              ),
+              const SizedBox(height: 16),
+              Observer(
+                (context) => Text(
+                  '${_summary.value} — derivation ran $_filterRuns times',
+                  textAlign: TextAlign.center,
                 ),
-                FilledButton.tonal(
-                  onPressed: _onClearBatchedTap,
-                  child: const Text('Clear batched'),
-                ),
-                FilledButton.tonal(
-                  onPressed: _onRestoreFiltersTap,
-                  child: const Text('Restore'),
-                ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonal(
+                    onPressed: _onClearLooseTap,
+                    child: const Text('Clear loose'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: _onClearBatchedTap,
+                    child: const Text('Clear batched'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: _onRestoreFiltersTap,
+                    child: const Text('Restore'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

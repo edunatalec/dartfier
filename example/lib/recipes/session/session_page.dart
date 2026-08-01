@@ -84,96 +84,99 @@ class _SessionPageState extends State<SessionPage> {
       appBar: AppBar(title: const Text('Session events')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SectionTitle('One signal, two ways to react'),
-            const SizedBox(height: 8),
-            const InfoCard(
-              'An auth session is state; a welcome snackbar, a redirect to '
-              'login and an analytics event are reactions to the change. Both '
-              'an Effect and a listen can watch this signal — the two logs '
-              'below watch the very same one, and only one of them is right '
-              'for the job.',
-            ),
-            const SizedBox(height: 16),
-            Observer(
-              (context) => Center(
-                child: Text(
-                  '${_store.session.value}',
-                  style: Theme.of(context).textTheme.headlineSmall,
+        child: SafeArea(
+          top: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SectionTitle('One signal, two ways to react'),
+              const SizedBox(height: 8),
+              const InfoCard(
+                'An auth session is state; a welcome snackbar, a redirect to '
+                'login and an analytics event are reactions to the change. Both '
+                'an Effect and a listen can watch this signal — the two logs '
+                'below watch the very same one, and only one of them is right '
+                'for the job.',
+              ),
+              const SizedBox(height: 16),
+              Observer(
+                (context) => Center(
+                  child: Text(
+                    '${_store.session.value}',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                FilledButton.tonal(
-                  onPressed: _onSignInTap,
-                  child: const Text('Sign in as ana'),
-                ),
-                FilledButton.tonal(
-                  onPressed: _onSwitchTap,
-                  child: const Text('Switch to bruno'),
-                ),
-                FilledButton.tonal(
-                  onPressed: _onExpireTap,
-                  child: const Text('Expire'),
-                ),
-                FilledButton.tonal(
-                  onPressed: _onSignOutTap,
-                  child: const Text('Sign out'),
-                ),
-              ],
-            ),
-            const Divider(height: 48),
-            const SectionTitle('Effect — runs on creation, sees only "now"'),
-            const SizedBox(height: 8),
-            const InfoCard(
-              'An Effect exists to keep a resource in sync with the current '
-              'state, so running on creation is the feature: the timer, the '
-              'subscription or the cache has to exist before anything '
-              'changes. As a session watcher that same trait is a bug — the '
-              'log below already has an entry before anyone signed in, which '
-              'in a real app means greeting the user on boot and routing to '
-              'login while nobody has logged out. And on "Switch to bruno" it '
-              'only ever sees bruno: the account whose cache should be '
-              'dropped is exactly the value it does not have.',
-            ),
-            const SizedBox(height: 16),
-            Observer(
-              (context) => EventLog(
-                entries: _effectLog.value,
-                emptyLabel: 'Nothing observed yet',
+              const SizedBox(height: 12),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonal(
+                    onPressed: _onSignInTap,
+                    child: const Text('Sign in as ana'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: _onSwitchTap,
+                    child: const Text('Switch to bruno'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: _onExpireTap,
+                    child: const Text('Expire'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: _onSignOutTap,
+                    child: const Text('Sign out'),
+                  ),
+                ],
               ),
-            ),
-            const Divider(height: 48),
-            const SectionTitle(
-              'listen — runs on change, knows where it came '
-              'from',
-            ),
-            const SizedBox(height: 8),
-            const InfoCard.highlight(
-              'listen never fires on creation and always carries previous → '
-              'next, which is what every reaction on this screen actually '
-              'needs: signedOut → signedIn is a welcome, signedIn → signedIn '
-              'is an account switch, signedIn → expired is a re-login prompt. '
-              'The snackbars come from a listen in the page, because showing '
-              'one needs a context; this log comes from a listen in the '
-              'store, where analytics belongs. Both are Effects underneath, '
-              'so both cost one dispose() — the store disposes its own.',
-            ),
-            const SizedBox(height: 16),
-            Observer(
-              (context) => EventLog(
-                entries: _store.analyticsLog.value,
-                emptyLabel: 'No transition yet',
+              const Divider(height: 48),
+              const SectionTitle('Effect — runs on creation, sees only "now"'),
+              const SizedBox(height: 8),
+              const InfoCard(
+                'An Effect exists to keep a resource in sync with the current '
+                'state, so running on creation is the feature: the timer, the '
+                'subscription or the cache has to exist before anything '
+                'changes. As a session watcher that same trait is a bug — the '
+                'log below already has an entry before anyone signed in, which '
+                'in a real app means greeting the user on boot and routing to '
+                'login while nobody has logged out. And on "Switch to bruno" it '
+                'only ever sees bruno: the account whose cache should be '
+                'dropped is exactly the value it does not have.',
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Observer(
+                (context) => EventLog(
+                  entries: _effectLog.value,
+                  emptyLabel: 'Nothing observed yet',
+                ),
+              ),
+              const Divider(height: 48),
+              const SectionTitle(
+                'listen — runs on change, knows where it came '
+                'from',
+              ),
+              const SizedBox(height: 8),
+              const InfoCard.highlight(
+                'listen never fires on creation and always carries previous → '
+                'next, which is what every reaction on this screen actually '
+                'needs: signedOut → signedIn is a welcome, signedIn → signedIn '
+                'is an account switch, signedIn → expired is a re-login prompt. '
+                'The snackbars come from a listen in the page, because showing '
+                'one needs a context; this log comes from a listen in the '
+                'store, where analytics belongs. Both are Effects underneath, '
+                'so both cost one dispose() — the store disposes its own.',
+              ),
+              const SizedBox(height: 16),
+              Observer(
+                (context) => EventLog(
+                  entries: _store.analyticsLog.value,
+                  emptyLabel: 'No transition yet',
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

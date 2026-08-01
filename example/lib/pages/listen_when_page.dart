@@ -96,90 +96,93 @@ class _ListenWhenPageState extends State<ListenWhenPage> {
       appBar: AppBar(title: const Text('listen & when')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SectionTitle('listen remembers the previous value'),
-            const SizedBox(height: 8),
-            const InfoCard(
-              'listen calls back with the previous and the next value, and '
-              'returns the Effect behind it as the subscription handle. Being '
-              'an Effect buys the hard parts: "Burst +3" writes three times in '
-              'a row and logs a single change, from the value before the burst '
-              'to the value after it. The parity subscription listens to a '
-              'Computed and only logs when the derived value actually changes '
-              '— "Skip 2" moves the count, but even stays even, so the '
-              'Computed never notifies in the first place.',
-            ),
-            const SizedBox(height: 16),
-            Observer(
-              (context) => Center(
-                child: Text(
-                  'count: ${_count.value} — ${_parity(_isEven.value)}',
-                  style: Theme.of(context).textTheme.headlineSmall,
+        child: SafeArea(
+          top: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SectionTitle('listen remembers the previous value'),
+              const SizedBox(height: 8),
+              const InfoCard(
+                'listen calls back with the previous and the next value, and '
+                'returns the Effect behind it as the subscription handle. Being '
+                'an Effect buys the hard parts: "Burst +3" writes three times in '
+                'a row and logs a single change, from the value before the burst '
+                'to the value after it. The parity subscription listens to a '
+                'Computed and only logs when the derived value actually changes '
+                '— "Skip 2" moves the count, but even stays even, so the '
+                'Computed never notifies in the first place.',
+              ),
+              const SizedBox(height: 16),
+              Observer(
+                (context) => Center(
+                  child: Text(
+                    'count: ${_count.value} — ${_parity(_isEven.value)}',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Observer(
-              (context) => EventLog(
-                entries: _changes.value,
-                emptyLabel: 'No change logged yet',
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                FilledButton.tonal(
-                  onPressed: _onIncrementTap,
-                  child: const Text('+1'),
+              const SizedBox(height: 8),
+              Observer(
+                (context) => EventLog(
+                  entries: _changes.value,
+                  emptyLabel: 'No change logged yet',
                 ),
-                FilledButton.tonal(
-                  onPressed: _onSkipTwoTap,
-                  child: const Text('Skip 2'),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonal(
+                    onPressed: _onIncrementTap,
+                    child: const Text('+1'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: _onSkipTwoTap,
+                    child: const Text('Skip 2'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: _onBurstTap,
+                    child: const Text('Burst +3'),
+                  ),
+                ],
+              ),
+              const Divider(height: 48),
+              const SectionTitle('when awaits a condition'),
+              const SizedBox(height: 8),
+              const InfoCard(
+                'when completes a Future with the first value that satisfies a '
+                'condition — the current value is checked first, so an '
+                'already-satisfied condition completes immediately without '
+                'subscribing to anything. Here a fetch starts and the handler '
+                'simply awaits AsyncData, no listener bookkeeping in sight. '
+                'There is no built-in timeout: wrap the call in Future.timeout '
+                'when the condition may never be satisfied.',
+              ),
+              const SizedBox(height: 16),
+              Observer(
+                (context) => Center(
+                  child: Text('total: ${_total.value.valueOrNull ?? '—'}'),
                 ),
-                FilledButton.tonal(
-                  onPressed: _onBurstTap,
-                  child: const Text('Burst +3'),
+              ),
+              const SizedBox(height: 8),
+              Observer(
+                (context) => EventLog(
+                  entries: _awaited.value,
+                  emptyLabel: 'Nothing awaited yet',
                 ),
-              ],
-            ),
-            const Divider(height: 48),
-            const SectionTitle('when awaits a condition'),
-            const SizedBox(height: 8),
-            const InfoCard(
-              'when completes a Future with the first value that satisfies a '
-              'condition — the current value is checked first, so an '
-              'already-satisfied condition completes immediately without '
-              'subscribing to anything. Here a fetch starts and the handler '
-              'simply awaits AsyncData, no listener bookkeeping in sight. '
-              'There is no built-in timeout: wrap the call in Future.timeout '
-              'when the condition may never be satisfied.',
-            ),
-            const SizedBox(height: 16),
-            Observer(
-              (context) => Center(
-                child: Text('total: ${_total.value.valueOrNull ?? '—'}'),
               ),
-            ),
-            const SizedBox(height: 8),
-            Observer(
-              (context) => EventLog(
-                entries: _awaited.value,
-                emptyLabel: 'Nothing awaited yet',
+              const SizedBox(height: 8),
+              Center(
+                child: FilledButton.tonal(
+                  onPressed: _onAwaitDataTap,
+                  child: const Text('Fetch and await AsyncData'),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Center(
-              child: FilledButton.tonal(
-                onPressed: _onAwaitDataTap,
-                child: const Text('Fetch and await AsyncData'),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

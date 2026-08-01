@@ -93,96 +93,102 @@ class _AsyncSignalPageState extends State<AsyncSignalPage> {
       appBar: AppBar(title: const Text('AsyncSignal')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SectionTitle('idle → loading → data / error'),
-            const SizedBox(height: 8),
-            const InfoCard(
-              'AsyncSignal<T> is a Signal<AsyncValue<T>>. It starts AsyncIdle, '
-              'and run publishes AsyncLoading, then AsyncData or AsyncError. '
-              'AsyncLoading and AsyncError carry the previous data, so a '
-              'refetch keeps showing the old content instead of flashing a '
-              'spinner — valueOrNull is the shortcut for the latest usable '
-              'data.',
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 100,
-              child: Observer(
-                (context) => switch (_quote.value) {
-                  AsyncIdle() => const Center(
-                    child: Text('Not requested yet — tap Fetch'),
-                  ),
-                  AsyncLoading(:final previous?) => Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(previous, textAlign: TextAlign.center),
-                      const SizedBox(height: 8),
-                      const LinearProgressIndicator(),
-                    ],
-                  ),
-                  AsyncLoading() => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                  AsyncData(:final value) => Center(
-                    child: Text(value, textAlign: TextAlign.center),
-                  ),
-                  AsyncError(:final error, :final previous?) => Center(
-                    child: Text(
-                      'failed: $error\nprevious: $previous',
-                      textAlign: TextAlign.center,
+        child: SafeArea(
+          top: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SectionTitle('idle → loading → data / error'),
+              const SizedBox(height: 8),
+              const InfoCard(
+                'AsyncSignal<T> is a Signal<AsyncValue<T>>. It starts AsyncIdle, '
+                'and run publishes AsyncLoading, then AsyncData or AsyncError. '
+                'AsyncLoading and AsyncError carry the previous data, so a '
+                'refetch keeps showing the old content instead of flashing a '
+                'spinner — valueOrNull is the shortcut for the latest usable '
+                'data.',
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 100,
+                child: Observer(
+                  (context) => switch (_quote.value) {
+                    AsyncIdle() => const Center(
+                      child: Text('Not requested yet — tap Fetch'),
                     ),
-                  ),
-                  AsyncError(:final error) => Center(
-                    child: Text('failed: $error', textAlign: TextAlign.center),
-                  ),
-                },
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                FilledButton.tonal(
-                  onPressed: _onFetchTap,
-                  child: const Text('Fetch'),
+                    AsyncLoading(:final previous?) => Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(previous, textAlign: TextAlign.center),
+                        const SizedBox(height: 8),
+                        const LinearProgressIndicator(),
+                      ],
+                    ),
+                    AsyncLoading() => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                    AsyncData(:final value) => Center(
+                      child: Text(value, textAlign: TextAlign.center),
+                    ),
+                    AsyncError(:final error, :final previous?) => Center(
+                      child: Text(
+                        'failed: $error\nprevious: $previous',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    AsyncError(:final error) => Center(
+                      child: Text(
+                        'failed: $error',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  },
                 ),
-                FilledButton.tonal(
-                  onPressed: _onFetchFailingTap,
-                  child: const Text('Fetch failing'),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonal(
+                    onPressed: _onFetchTap,
+                    child: const Text('Fetch'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: _onFetchFailingTap,
+                    child: const Text('Fetch failing'),
+                  ),
+                ],
+              ),
+              const Divider(height: 48),
+              const SectionTitle('Latest wins'),
+              const SizedBox(height: 8),
+              const InfoCard(
+                'Starting a new run drops the outcome of any older one still in '
+                'flight — success or failure alike. Below, a slow fetch starts '
+                'first and a fast one right after: the fast result is published, '
+                'and when the slow one finally completes it is discarded, so the '
+                'UI never shows stale data out of order.',
+              ),
+              const SizedBox(height: 16),
+              Observer(
+                (context) => Text(
+                  'current: ${_race.value.valueOrNull ?? '—'}',
+                  textAlign: TextAlign.center,
                 ),
-              ],
-            ),
-            const Divider(height: 48),
-            const SectionTitle('Latest wins'),
-            const SizedBox(height: 8),
-            const InfoCard(
-              'Starting a new run drops the outcome of any older one still in '
-              'flight — success or failure alike. Below, a slow fetch starts '
-              'first and a fast one right after: the fast result is published, '
-              'and when the slow one finally completes it is discarded, so the '
-              'UI never shows stale data out of order.',
-            ),
-            const SizedBox(height: 16),
-            Observer(
-              (context) => Text(
-                'current: ${_race.value.valueOrNull ?? '—'}',
-                textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: 8),
-            Observer((context) => EventLog(entries: _raceLog.value)),
-            const SizedBox(height: 8),
-            Center(
-              child: FilledButton.tonal(
-                onPressed: _onRaceTap,
-                child: const Text('Start slow (2s) then fast (300ms)'),
+              const SizedBox(height: 8),
+              Observer((context) => EventLog(entries: _raceLog.value)),
+              const SizedBox(height: 8),
+              Center(
+                child: FilledButton.tonal(
+                  onPressed: _onRaceTap,
+                  child: const Text('Start slow (2s) then fast (300ms)'),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
