@@ -84,6 +84,7 @@ it — that is the `dispose()` above, and the full ownership rule is in
 ## Contents
 
 - [Why dartfier](#why-dartfier)
+- [Coming from ValueNotifier](#coming-from-valuenotifier)
 - [API](#api)
 - [Semantics](#semantics)
 - [Rules of use](#rules-of-use)
@@ -108,6 +109,27 @@ it — that is the `dispose()` above, and the full ownership rule is in
 - **Debug errors instead of silence.** An `Observer` that tracks nothing
   throws in debug mode rather than never rebuilding, which turns the classic
   failure mode of read-based tracking into a first-run error.
+
+## Coming from ValueNotifier
+
+`Signal` is a `ChangeNotifier` implementing `ValueListenable<T>`, so adopting it
+is a type change:
+
+```dart
+final ValueNotifier<int> count = ValueNotifier(0);
+final Signal<int> count = Signal(0);
+```
+
+Every consumer keeps working untouched — a `ValueListenableBuilder`, an
+`AnimatedBuilder` over `Listenable.merge`, a bare `addListener`, a function
+whose parameter is typed `ValueListenable<int>`. Nothing has to be rewritten
+before you can derive a `Computed` from that value or run an `Effect` on it,
+so a large app can move one variable at a time and keep shipping in between.
+
+For new code, `Observer` is the one to reach for: it subscribes to whatever the
+builder reads, so there is no listenable to name and no merge list to keep in
+sync — forget a value in that list and the widget silently stops rebuilding,
+which is the failure mode automatic tracking removes.
 
 ## API
 
