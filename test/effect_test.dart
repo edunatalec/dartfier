@@ -39,6 +39,35 @@ void main() {
       expect(log, ['1:10', '3:20']);
     });
 
+    test('reruns after a burst that returns to the original value', () async {
+      final Signal<int> count = Signal(1);
+      final List<int> log = <int>[];
+      Effect((_) => log.add(count.value));
+
+      count.value = 2;
+      count.value = 1;
+      await pumpEventQueue();
+
+      expect(log, [1, 1]);
+    });
+
+    test(
+      'skips the rerun when a batch returns to the original value',
+      () async {
+        final Signal<int> count = Signal(1);
+        final List<int> log = <int>[];
+        Effect((_) => log.add(count.value));
+
+        batch(() {
+          count.value = 2;
+          count.value = 1;
+        });
+        await pumpEventQueue();
+
+        expect(log, [1]);
+      },
+    );
+
     test('reads a consistent diamond after coalescing', () async {
       final Signal<int> base = Signal(1);
       final Computed<int> left = Computed(() => base.value + 1);
