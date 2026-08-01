@@ -88,6 +88,7 @@ it — that is the `dispose()` above, and the full ownership rule is in
 - [Semantics](#semantics)
 - [Rules of use](#rules-of-use)
 - [Example app](#example-app)
+- [Contributing](#contributing)
 - [License](#license)
 
 ## Why dartfier
@@ -466,7 +467,7 @@ queue, so effects never observe a diamond glitch.
 
 ## Example app
 
-A demo app lives in [`example/`](example/). It runs in two halves: an API tour,
+A demo app lives in [`example/`](https://github.com/edunatalec/dartfier/tree/master/example). It runs in two halves: an API tour,
 one page per feature with the guarantees on screen, and four real-world recipes
 — a debounced search, a checkout, session events and an action that waits for
 its prerequisite — each one showing why it picked that API over the
@@ -478,6 +479,10 @@ flutter create .   # generate platform folders the first time
 flutter run
 ```
 
+## Contributing
+
+[CONTRIBUTING.md](https://github.com/edunatalec/dartfier/blob/master/CONTRIBUTING.md) is the contract for whoever writes code here: the one command that has to be green before a pull request, what the two CI jobs check, the conventions, and the deliberate gaps a PR should not try to fix.
+
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](https://github.com/edunatalec/dartfier/blob/master/LICENSE).
