@@ -162,8 +162,8 @@ scores.value = {...scores.value, 'b': 2}; // same rule for maps and sets
 ```
 
 The write is swallowed rather than rejected because the equality guard sees the
-same object on both sides. `equals: listEquals` changes what counts as equal, not
-this: a mutated list is still the very same list.
+same object on both sides. `equals: listEquals` changes what counts as equal,
+not this: a mutated list is still the very same list.
 
 `update()` derives the next value from the current one, reading it with
 `peek()` — so calling it inside a tracked scope does not subscribe that scope
@@ -358,8 +358,8 @@ final AsyncValue<List<Book>> loaded = await results.when(
 ```
 
 Called from a share button while the screen is already loading, this waits for
-the request in flight instead of starting a second one — and returns at once if
-the data already arrived. Calling `run` again would do neither: `run` is
+the request in flight instead of starting a second one — and returns at once
+if the data already arrived. Calling `run` again would do neither: `run` is
 latest-wins, so the outcome of the older call would be dropped.
 
 Changes are observed through `listen`, so a synchronous burst completes the
@@ -460,11 +460,11 @@ Batches nest — only the outermost flushes — and pending notifications are
 still delivered when the body throws.
 
 `batch` is not required: a single write is already atomic, and state that
-always changes together belongs in one `Signal` — `filters.value = Filters(…)`
-needs no batch at all. Reach for it when independent signals must move as a
-unit, or when a burst feeds an expensive `Computed`. It does not help with
-writes arriving in separate turns — a scroll position, a stream — since there
-is no group to close.
+always changes together belongs in one `Signal` — `filters.value =
+Filters(…)` needs no batch at all. Reach for it when independent signals must
+move as a unit, or when a burst feeds an expensive `Computed`. It does not
+help with writes arriving in separate turns — a scroll position, a stream —
+since there is no group to close.
 
 Every member is documented with a runnable example in the
 [API reference](https://pub.dev/documentation/dartfier/latest/), grouped into
@@ -543,11 +543,13 @@ queue, so effects never observe a diamond glitch.
 
 ## Example app
 
-A demo app lives in [`example/`](https://github.com/edunatalec/dartfier/tree/master/example). It runs in two halves: an API tour,
-one page per feature with the guarantees on screen, and four real-world recipes
-— a debounced search, a checkout, session events and an action that waits for
-its prerequisite — each one showing why it picked that API over the
-neighbouring one. Run it with:
+A demo app lives in
+[`example/`](https://github.com/edunatalec/dartfier/tree/master/example).
+It runs in two halves: an API tour, one page per feature with the guarantees
+on screen, and six real-world recipes — a debounced search, a checkout,
+session events, an action that waits for its prerequisite, a startup gate and
+a settings screen that persists on change — each one showing why it picked
+that API over the neighbouring one. Run it with:
 
 ```sh
 cd example
@@ -557,7 +559,10 @@ flutter run
 
 ## Contributing
 
-[CONTRIBUTING.md](https://github.com/edunatalec/dartfier/blob/master/CONTRIBUTING.md) is the contract for whoever writes code here: the one command that has to be green before a pull request, what the two CI jobs check, the conventions, and the deliberate gaps a PR should not try to fix.
+[CONTRIBUTING.md](https://github.com/edunatalec/dartfier/blob/master/CONTRIBUTING.md)
+is the contract for whoever writes code here: the one command that has to be
+green before a pull request, what the two CI jobs check, the conventions, and
+the deliberate gaps a PR should not try to fix.
 
 ## License
 

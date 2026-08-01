@@ -13,6 +13,12 @@ import 'untracked.dart';
 ///
 /// Available on [Signal], [Computed] and [AsyncSignal] alike: they all are
 /// [ReadonlySignal]s underneath.
+///
+/// See also:
+///
+///  * [Watch], which observes an expression instead of a single signal.
+///  * [Effect], which runs on creation and reacts to the current state.
+///  * [Observer], which does the same job for a widget subtree.
 extension ReadonlySignalSubscriptions<T> on ReadonlySignal<T> {
   /// Calls [onChange] with the previous and the next value on every change.
   ///

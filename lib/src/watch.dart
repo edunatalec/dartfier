@@ -46,7 +46,7 @@ import 'untracked.dart';
 /// final Signal<int> threshold = Signal(2);
 /// final Signal<List<int>> numbers = Signal(const [1, 2, 3]);
 ///
-/// final Watch<List<int>> above = Watch(
+/// final Watch<List<int>> selected = Watch(
 ///   () => numbers.value.where((int n) => n > threshold.value).toList(),
 ///   (List<int> previous, List<int> next) => debugPrint('$next'),
 ///   equals: listEquals,
