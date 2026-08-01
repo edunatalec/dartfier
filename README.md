@@ -173,6 +173,12 @@ With `equals`, a recomputation that produces an equal result keeps the
 previous object, preserving identity for downstream `==` checks. A dependency
 cycle throws a `StateError` on read.
 
+Laziness never costs you a notification: a `Computed` nobody reads and nobody
+listens to is not recomputed by a write, but subscribing to one — through
+`addListener`, `Listenable.merge`, `ValueListenableBuilder` or `listen` — runs
+the first computation right there, so the listener is connected to the graph
+from the start.
+
 ### ReadonlySignal
 
 The read-only supertype of `Signal` and `Computed`. Expose a value as

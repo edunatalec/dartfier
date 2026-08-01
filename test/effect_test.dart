@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dartfier/dartfier.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -238,6 +239,49 @@ void main() {
       effect.dispose();
 
       expect(log, ['run', 'cleanup']);
+    });
+
+    test('reports a throwing cleanup and runs the rest', () async {
+      final FlutterExceptionHandler? handler = FlutterError.onError;
+      final List<Object> reported = <Object>[];
+      FlutterError.onError = (FlutterErrorDetails details) =>
+          reported.add(details.exception);
+      addTearDown(() => FlutterError.onError = handler);
+
+      final Signal<int> count = Signal(0);
+      final List<String> log = <String>[];
+
+      Effect((onCleanup) {
+        log.add('run ${count.value}');
+        onCleanup(() => log.add('first'));
+        onCleanup(() => throw StateError('boom'));
+        onCleanup(() => log.add('third'));
+      });
+
+      count.value = 1;
+      await pumpEventQueue();
+
+      expect(log, ['run 0', 'third', 'first', 'run 1']);
+      expect(reported, [isA<StateError>()]);
+    });
+
+    test('a throwing cleanup still releases the dependencies on dispose', () {
+      final FlutterExceptionHandler? handler = FlutterError.onError;
+      FlutterError.onError = (FlutterErrorDetails details) {};
+      addTearDown(() => FlutterError.onError = handler);
+
+      final Signal<int> count = Signal(0);
+      final List<int> log = <int>[];
+
+      final Effect effect = Effect((onCleanup) {
+        log.add(count.value);
+        onCleanup(() => throw StateError('boom'));
+      });
+
+      effect.dispose();
+      count.value = 1;
+
+      expect(log, [0]);
     });
 
     test('runs cleanups in reverse registration order', () async {

@@ -439,5 +439,33 @@ void main() {
 
       expect(outer.value, 2);
     });
+
+    test('notifies a listener added before the first read', () {
+      final Signal<int> base = Signal(0);
+      final Computed<int> doubled = Computed(() => base.value * 2);
+
+      int notifications = 0;
+      doubled.addListener(() => notifications++);
+
+      base.value = 1;
+
+      expect(notifications, 1);
+      expect(doubled.value, 2);
+    });
+
+    test('drives a merged Listenable without an explicit read', () {
+      final Signal<int> left = Signal(0);
+      final Signal<int> right = Signal(0);
+      final Computed<int> a = Computed(() => left.value * 2);
+      final Computed<int> b = Computed(() => right.value * 3);
+
+      int notifications = 0;
+      Listenable.merge(<Listenable>[a, b]).addListener(() => notifications++);
+
+      left.value = 1;
+      right.value = 1;
+
+      expect(notifications, 2);
+    });
   });
 }

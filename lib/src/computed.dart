@@ -185,6 +185,19 @@ base class Computed<T> extends ChangeNotifier
     if (_changed) notifyListeners();
   }
 
+  /// Subscribes [listener] and forces the first computation.
+  ///
+  /// A lazy [Computed] has no dependencies until it runs once, so a listener
+  /// added before any read would never be called. Listening therefore settles
+  /// the value and keeps the computed eager, exactly like
+  /// [ReadonlySignalSubscriptions.listen] does.
+  @override
+  void addListener(VoidCallback listener) {
+    if (!_disposed) settle();
+
+    super.addListener(listener);
+  }
+
   @override
   void addDependent(ReactiveNode dependent) => _dependents.add(dependent);
 

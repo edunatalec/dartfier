@@ -3,6 +3,8 @@ library;
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import 'tracker.dart';
 
 /// A cleanup callback registered by an [Effect] run.
@@ -128,7 +130,18 @@ class Effect {
     _cleanups.clear();
 
     for (final EffectCleanup cleanup in pending) {
-      Tracker.untracked(cleanup);
+      try {
+        Tracker.untracked(cleanup);
+      } catch (error, stackTrace) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stackTrace,
+            library: 'dartfier',
+            context: ErrorDescription('running an Effect cleanup'),
+          ),
+        );
+      }
     }
   }
 }
