@@ -17,8 +17,11 @@ class _SignalPageState extends State<SignalPage> {
   final _guarded = Signal(0);
   final _guardedNotifications = Signal(0);
 
-  final _items = Signal(const [1, 2, 3], equals: listEquals);
-  final _itemsNotifications = Signal(0);
+  final _structuralItems = Signal(const [1, 2, 3], equals: listEquals);
+  final _structuralNotifications = Signal(0);
+
+  final _identityItems = Signal(const [1, 2, 3]);
+  final _identityNotifications = Signal(0);
 
   final _mutable = Signal<List<int>>([1, 2, 3]);
 
@@ -27,14 +30,17 @@ class _SignalPageState extends State<SignalPage> {
     super.initState();
 
     _guarded.addListener(_onGuardedNotified);
-    _items.addListener(_onItemsNotified);
+    _structuralItems.addListener(_onStructuralItemsNotified);
+    _identityItems.addListener(_onIdentityItemsNotified);
   }
 
   @override
   void dispose() {
     _mutable.dispose();
-    _items.dispose();
-    _itemsNotifications.dispose();
+    _identityItems.dispose();
+    _identityNotifications.dispose();
+    _structuralItems.dispose();
+    _structuralNotifications.dispose();
     _guarded.dispose();
     _guardedNotifications.dispose();
     _count.dispose();
@@ -46,8 +52,12 @@ class _SignalPageState extends State<SignalPage> {
     _guardedNotifications.value = _guardedNotifications.value + 1;
   }
 
-  void _onItemsNotified() {
-    _itemsNotifications.value = _itemsNotifications.value + 1;
+  void _onStructuralItemsNotified() {
+    _structuralNotifications.value = _structuralNotifications.value + 1;
+  }
+
+  void _onIdentityItemsNotified() {
+    _identityNotifications.value = _identityNotifications.value + 1;
   }
 
   void _onDecrementTap() {
@@ -67,11 +77,18 @@ class _SignalPageState extends State<SignalPage> {
   }
 
   void _onSetEqualListTap() {
-    _items.value = [1, 2, 3];
+    final List<int> next = [1, 2, 3];
+
+    _structuralItems.value = next;
+    _identityItems.value = next;
   }
 
   void _onAppendTap() {
-    _items.value = [..._items.value, _items.value.length + 1];
+    final List<int> current = _structuralItems.value;
+    final List<int> next = [...current, current.length + 1];
+
+    _structuralItems.value = next;
+    _identityItems.value = next;
   }
 
   void _onMutateInPlaceTap() {
@@ -160,18 +177,31 @@ class _SignalPageState extends State<SignalPage> {
             const Divider(height: 48),
             const SectionTitle('Custom equals'),
             const SizedBox(height: 8),
-            const InfoCard(
-              'Signal([1, 2, 3], equals: listEquals) replaces == in the '
-              'guard. Setting a fresh but element-equal list is swallowed; '
-              'appending notifies. This is the supported pattern for '
-              'collections: immutable snapshots plus a custom equals.',
+            const InfoCard.highlight(
+              'Two signals, same writes: one with equals: listEquals, the '
+              'other with the default ==. "Set [1, 2, 3]" assigns a fresh list '
+              'holding the same elements — listEquals judges it equal and '
+              'swallows the write, while == compares instances and notifies. '
+              '"Append" changes the elements, so both notify. List does not '
+              'override ==, so without a custom equals the guard is identity: '
+              'every reassignment notifies.',
             ),
             const SizedBox(height: 16),
             Observer(
-              (context) => Text(
-                'items: ${_items.value} — '
-                'notifications: ${_itemsNotifications.value}',
-                textAlign: TextAlign.center,
+              (context) => Column(
+                children: [
+                  Text(
+                    'equals: listEquals — ${_structuralItems.value} — '
+                    'notifications: ${_structuralNotifications.value}',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'default == — ${_identityItems.value} — '
+                    'notifications: ${_identityNotifications.value}',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 8),

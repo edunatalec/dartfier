@@ -59,6 +59,16 @@ These are absent by decision, not by omission — a PR adding one will be declin
   which costs a wrapper type reimplementing the whole `List` interface. Taking that road
   would also break the promise that a `ValueNotifier` codebase migrates one variable at a
   time: the two would stop behaving alike.
+- **Structural equality by default.** The write guard is `==`, and a `List` does not override it —
+  so a collection signal needs `equals: listEquals` spelled out. Inferring it from the runtime
+  type looks free and is not. `listEquals` is shallow, so a `Signal<List<List<int>>>` would
+  compare structurally at one level and by identity at the next. The O(n) scan would run on every
+  write, worst case on the append the package recommends. A subclass that *does* define value
+  equality would have the `==` its author wrote silently ignored. The rule would have no edge
+  either — `Map`, then `Set`, then an `Iterable` that cannot be compared without consuming it.
+  And opting back out would mean passing `equals: identical`, which turns plain `ValueNotifier`
+  behaviour into the case that needs a flag. The cost of the current default is one named
+  argument, at the call site that chose the collection.
 - **`context.watch()`.** Subscribing an `Element` from a getter means holding a reference to
   it, and an unmounted `Element` keeps its whole subtree alive. The alternatives — retaining
   until the next notification, or weak references plus finalizers — are at odds with a core
