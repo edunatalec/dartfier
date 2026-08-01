@@ -13,6 +13,7 @@ import 'pages/value_listenable_page.dart';
 import 'pages/watch_page.dart';
 import 'recipes/cart/cart_page.dart';
 import 'recipes/gated_action/gated_action_page.dart';
+import 'recipes/preferences/preferences_page.dart';
 import 'recipes/search/search_page.dart';
 import 'recipes/session/session_page.dart';
 import 'recipes/startup/startup_page.dart';
@@ -116,6 +117,11 @@ class HomePage extends StatelessWidget {
         title: 'Action with a prerequisite',
         subtitle: 'Why when — awaiting readiness inside a handler',
         page: GatedActionPage(),
+      ),
+      _Example(
+        title: 'Settings that persist',
+        subtitle: 'Why Watch — writing on change, never on open',
+        page: PreferencesPage(),
       ),
       _Example(
         title: 'Startup gate',
