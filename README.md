@@ -456,6 +456,15 @@ batch(() {
 });
 ```
 
+Three writes, three recomputations without the batch — one with it.
+
+Not every observer notices, though. An `Observer` rebuilds once either way,
+because the frame coalesces the rebuilds; an `Effect` and a `listen` run once
+either way, because reruns coalesce per microtask. What `batch` changes is the
+work in between and who sees it: a `Computed` recomputing once instead of
+three times, and a bare `addListener` called once instead of three — two of
+those three carrying a state nobody asked for.
+
 Batches nest — only the outermost flushes — and pending notifications are
 still delivered when the body throws.
 
