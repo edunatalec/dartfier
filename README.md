@@ -17,39 +17,80 @@ flutter --version
 
 ## Installation
 
+```sh
+flutter pub add dartfier
+```
+
+Or in `pubspec.yaml`:
+
 ```yaml
 dependencies:
   dartfier: ^0.1.0
 ```
 
+```dart
+import 'package:dartfier/dartfier.dart';
+```
+
 ## Quick start
 
-```dart
-final Signal<int> count = Signal(0);
-final Computed<int> doubled = Computed(() => count.value * 2);
+A counter, end to end — the signal, the derived value, the widget that tracks
+them and the disposal that ends them:
 
-Observer((context) => Text('${count.value} × 2 = ${doubled.value}'))
+```dart
+class CounterPage extends StatefulWidget {
+  const CounterPage({super.key});
+
+  @override
+  State<CounterPage> createState() => _CounterPageState();
+}
+
+class _CounterPageState extends State<CounterPage> {
+  final Signal<int> count = Signal(0);
+  late final Computed<int> doubled = Computed(() => count.value * 2);
+
+  @override
+  void dispose() {
+    doubled.dispose();
+    count.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Observer(
+          (context) => Text('${count.value} × 2 = ${doubled.value}'),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => count.value++,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
 ```
 
 Reading `.value` inside a tracked scope — an `Observer` builder, a `Computed`
 function or an `Effect` body — subscribes the reader automatically. No
 listenable lists, no `Listenable.merge`.
 
-The [example app](example/) runs in two halves: an API tour, one page per
-feature with the guarantees on screen, and four real-world recipes — a
-debounced search, a checkout, session events and an action that waits for its
-prerequisite — each one showing why it picked that API over the neighbouring
-one.
+Every `Signal`, `Computed` and `Effect` has an owner, and the owner disposes
+it — that is the `dispose()` above, and the full ownership rule is in
+[Rules of use](#rules-of-use).
 
 ## Contents
 
-- [Why dartfier?](#why-dartfier)
+- [Why dartfier](#why-dartfier)
 - [API](#api)
 - [Semantics](#semantics)
 - [Rules of use](#rules-of-use)
+- [Example app](#example-app)
 - [License](#license)
 
-## Why dartfier?
+## Why dartfier
 
 - **Native by construction.** `Signal` and `Computed` are `ChangeNotifier`s
   implementing `ValueListenable`, so `ValueListenableBuilder`,
@@ -423,6 +464,20 @@ queue, so effects never observe a diamond glitch.
    after 100 rounds — the same cutoff `Effect` uses, and for the same reason:
    hanging the isolate is the worst failure mode, since it leaves no trace.
 
+## Example app
+
+A demo app lives in [`example/`](example/). It runs in two halves: an API tour,
+one page per feature with the guarantees on screen, and four real-world recipes
+— a debounced search, a checkout, session events and an action that waits for
+its prerequisite — each one showing why it picked that API over the
+neighbouring one. Run it with:
+
+```sh
+cd example
+flutter create .   # generate platform folders the first time
+flutter run
+```
+
 ## License
 
-[MIT](LICENSE)
+MIT — see [LICENSE](LICENSE).
