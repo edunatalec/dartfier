@@ -20,9 +20,11 @@ typedef EffectCleanup = void Function();
 /// read changes. Reruns are coalesced through the microtask queue: a burst of
 /// synchronous writes produces a single rerun that reads consistent state.
 ///
-/// The body receives a cleanup registrar. Registered cleanups run in reverse
-/// order before the next rerun and on [dispose] — use them to release
-/// resources opened by the previous run.
+/// The body receives `onCleanup`, which registers a callback. Cleanups run in
+/// reverse order before the next rerun and on [dispose] — use them to release
+/// resources opened by the previous run. A cleanup that throws is reported to
+/// [FlutterError] and the remaining ones still run, so a failure while
+/// releasing one resource never strands another.
 ///
 /// ```dart
 /// final Signal<Duration> period = Signal(const Duration(seconds: 1));

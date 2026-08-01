@@ -235,8 +235,9 @@ when any value it read changes. Reruns are coalesced through the microtask
 queue: a burst of synchronous writes produces a single rerun reading
 consistent state.
 
-The body receives a cleanup registrar — cleanups run in reverse order before
-the next rerun and on `dispose()`:
+The body receives `onCleanup`, which registers a callback — cleanups run in
+reverse order before the next rerun and on `dispose()`, and one that throws is
+reported to `FlutterError` without stopping the others:
 
 ```dart
 final Effect ticker = Effect((onCleanup) {

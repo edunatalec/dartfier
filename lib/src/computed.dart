@@ -28,6 +28,13 @@ part of 'readonly_signal.dart';
 /// [Computed] implements [ReadonlySignal] — expose it as such to hand
 /// readers listening without writing.
 ///
+/// Disposing is the owner's job: whoever creates the computed calls [dispose],
+/// after which it stops tracking and keeps its last value. Until then it stays
+/// registered as a dependent of every source it read — the source holds the
+/// reference, not the other way around, so a computed created in a `State` and
+/// left undisposed keeps that closure reachable through a signal that outlives
+/// the screen.
+///
 /// See also:
 ///
 ///  * [Signal], the writable value a computation usually reads from.
