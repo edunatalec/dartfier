@@ -24,6 +24,7 @@ analyzer:
     unused_local_variable: ignore
     unused_element: ignore
     unused_import: ignore
+    unnecessary_import: ignore
 YAML
 
 step "Extracting samples from lib/"

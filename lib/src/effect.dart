@@ -50,6 +50,7 @@ typedef EffectCleanup = void Function();
 ///
 ///  * [ReadonlySignalSubscriptions.listen], an effect that also receives the
 ///    previous value.
+///  * [Watch], which skips the first run and reacts only to a change.
 ///  * [Observer], which does the same job for a widget subtree.
 ///  * [untracked], to read a value inside the body without depending on it.
 class Effect {

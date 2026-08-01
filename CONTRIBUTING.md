@@ -69,7 +69,8 @@ These are absent by decision, not by omission — a PR adding one will be declin
   And opting back out would mean passing `equals: identical`, which turns plain `ValueNotifier`
   behaviour into the case that needs a flag. The cost of the current default is one named
   argument, at the call site that chose the collection.
-- **`context.watch()`.** Subscribing an `Element` from a getter means holding a reference to
+- **`context.watch()`** — not to be confused with the `Watch` class, which ships and is
+  unrelated. Subscribing an `Element` from a getter means holding a reference to
   it, and an unmounted `Element` keeps its whole subtree alive. The alternatives — retaining
   until the next notification, or weak references plus finalizers — are at odds with a core
   meant to be read in one sitting. `Observer` does the same job, one widget away.

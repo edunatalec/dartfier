@@ -219,6 +219,11 @@ final Effect ticker = Effect((onCleanup) {
 ticker.dispose(); // cancels the last timer
 ```
 
+That first run is not optional — it is what collects the dependencies, and it
+is also what brings the world in sync with the state that is already there: the
+timer above exists from the start, not from the first period change. To react
+only to a *change*, use [`Watch`](#watch) instead.
+
 ### Observer
 
 A widget whose builder runs under tracking:
@@ -322,6 +327,37 @@ completes the future with the value at the end of the burst. There is no
 built-in timeout: while the condition is never satisfied — including after the
 signal is disposed — the future never completes, so wrap the call in
 `Future.timeout` when that matters.
+
+### Watch
+
+`listen` is scoped to a single signal. `Watch` observes an *expression*: the
+tracking function runs under tracking, so it may read as many reactive values
+as it needs, and the callback receives the previous and the next result.
+
+```dart
+final Watch<(String, bool)> watcher = Watch(
+  () => (user.value, premium.value),
+  (previous, next) => showBanner(next),
+);
+
+watcher.dispose();
+```
+
+A record is the idiomatic way to track several values at once: records compare
+structurally, so the callback runs when any component changes and stays silent
+when the group returns to what it was.
+
+It is an `Effect` underneath, so everything a `listen` buys applies here —
+reruns coalesce per microtask, the callback runs untracked, and dependencies
+are rediscovered on every run, so a tracking function reading `useLeft.value ?
+left.value : right.value` stops depending on `right` while the flag is true.
+Results are compared with `==` unless `equals` is given, which a tracking
+function returning a collection needs.
+
+The first run only captures the value, so nothing fires on creation. That is
+the whole difference from `Effect`: reach for a `Watch` to react to a
+*transition*, and for an `Effect` to keep something in sync with the current
+state — including on the first run.
 
 ### untracked and peek
 

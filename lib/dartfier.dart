@@ -32,6 +32,7 @@
 ///  * [Computed], a lazy value derived from other reactive values.
 ///  * [ReadonlySignal], the read-only supertype of both.
 ///  * [Effect], a side effect that reruns when what it read changes.
+///  * [Watch], a side effect on a tracked expression, skipping the first run.
 ///  * [Observer], the widget that rebuilds on the values its builder reads.
 ///  * [AsyncSignal], which brings asynchronous work into the graph.
 ///  * [batch], which groups several writes into a single notification.
@@ -45,3 +46,4 @@ export 'src/listen.dart';
 export 'src/observer.dart';
 export 'src/readonly_signal.dart';
 export 'src/untracked.dart';
+export 'src/watch.dart';

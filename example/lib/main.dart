@@ -10,6 +10,7 @@ import 'pages/readonly_signal_page.dart';
 import 'pages/signal_page.dart';
 import 'pages/untracked_peek_page.dart';
 import 'pages/value_listenable_page.dart';
+import 'pages/watch_page.dart';
 import 'recipes/cart/cart_page.dart';
 import 'recipes/gated_action/gated_action_page.dart';
 import 'recipes/search/search_page.dart';
@@ -71,6 +72,11 @@ class HomePage extends StatelessWidget {
         title: 'listen & when',
         subtitle: 'Side effects on change — previous → next, awaited condition',
         page: ListenWhenPage(),
+      ),
+      _Example(
+        title: 'Watch',
+        subtitle: 'Side effects on a tracked expression — silent on creation',
+        page: WatchPage(),
       ),
       _Example(
         title: 'untracked & peek',
