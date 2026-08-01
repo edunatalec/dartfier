@@ -28,7 +28,6 @@ analysis_options.yaml
 .superpowers/
 .metadata
 scripts/
-CONTRIBUTING.md
 .github/
 .vscode/
 .fvm/
