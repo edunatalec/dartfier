@@ -148,8 +148,8 @@ items.value = [1, 2, 3]; // notifies
 
 `listEquals` is Flutter's, not dartfier's: it needs
 `import 'package:flutter/foundation.dart';`, and so do `mapEquals` and
-`setEquals`. A file that already imports `material.dart` gets them for free; a
-plain store usually does not.
+`setEquals`. Importing `material.dart` is not enough — it re-exports only part
+of `foundation`, and these three are not in it.
 
 **Collections are replaced, never mutated in place.** Like `ValueNotifier`, a
 `Signal` notifies on assignment, not on what you do to the object it holds —
