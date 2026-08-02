@@ -125,7 +125,7 @@ base class Computed<T> extends ChangeNotifier
           ? Tracker.collect(<Listenable>{}, _compute)
           : _dependencies.track(_compute);
 
-      _changed = !_hasValue || !_isEqual(_value, next);
+      _changed = !_hasValue || !isEqual(_value, next, equals: _equals);
 
       if (_changed) _value = next;
 
@@ -218,12 +218,6 @@ base class Computed<T> extends ChangeNotifier
     _dependencies.dispose();
 
     super.dispose();
-  }
-
-  bool _isEqual(T previous, T next) {
-    final bool Function(T previous, T next)? equals = _equals;
-
-    return equals != null ? equals(previous, next) : previous == next;
   }
 }
 

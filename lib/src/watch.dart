@@ -2,6 +2,7 @@
 library;
 
 import 'effect.dart';
+import 'equality.dart';
 import 'untracked.dart';
 
 /// A side effect on an auto-tracked expression, skipping the first run.
@@ -83,11 +84,7 @@ class Watch<T> {
         return;
       }
 
-      final bool unchanged = equals != null
-          ? equals(previous, next)
-          : previous == next;
-
-      if (unchanged) return;
+      if (isEqual(previous, next, equals: equals)) return;
 
       final T before = previous;
       previous = next;

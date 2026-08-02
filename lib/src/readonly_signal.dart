@@ -3,6 +3,7 @@ library;
 
 import 'package:flutter/foundation.dart';
 
+import 'equality.dart';
 import 'tracker.dart';
 
 part 'computed.dart';

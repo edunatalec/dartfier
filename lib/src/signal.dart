@@ -73,7 +73,7 @@ base class Signal<T> extends ChangeNotifier
   /// value the signal held when the batch first wrote to it, so a batch that
   /// moves the value and puts it back notifies nobody.
   set value(T newValue) {
-    if (_disposed || _isEqual(_value, newValue)) return;
+    if (_disposed || isEqual(_value, newValue, equals: _equals)) return;
 
     final T previous = _value;
     _value = newValue;
@@ -88,7 +88,7 @@ base class Signal<T> extends ChangeNotifier
   }
 
   void _notify(T previous) {
-    if (_disposed || _isEqual(previous, _value)) return;
+    if (_disposed || isEqual(previous, _value, equals: _equals)) return;
 
     notifyListeners();
   }
@@ -136,11 +136,5 @@ base class Signal<T> extends ChangeNotifier
     _dependents.clear();
 
     super.dispose();
-  }
-
-  bool _isEqual(T previous, T next) {
-    final bool Function(T previous, T next)? equals = _equals;
-
-    return equals != null ? equals(previous, next) : previous == next;
   }
 }
