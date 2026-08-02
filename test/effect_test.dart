@@ -1,8 +1,9 @@
 import 'dart:async';
 
 import 'package:dartfier/dartfier.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support.dart';
 
 void main() {
   group('Effect', () {
@@ -242,11 +243,7 @@ void main() {
     });
 
     test('reports a throwing cleanup and runs the rest', () async {
-      final FlutterExceptionHandler? handler = FlutterError.onError;
-      final List<Object> reported = <Object>[];
-      FlutterError.onError = (FlutterErrorDetails details) =>
-          reported.add(details.exception);
-      addTearDown(() => FlutterError.onError = handler);
+      final List<Object> reported = captureFlutterErrors();
 
       final Signal<int> count = Signal(0);
       final List<String> log = <String>[];
@@ -266,9 +263,7 @@ void main() {
     });
 
     test('a throwing cleanup still releases the dependencies on dispose', () {
-      final FlutterExceptionHandler? handler = FlutterError.onError;
-      FlutterError.onError = (FlutterErrorDetails details) {};
-      addTearDown(() => FlutterError.onError = handler);
+      captureFlutterErrors();
 
       final Signal<int> count = Signal(0);
       final List<int> log = <int>[];

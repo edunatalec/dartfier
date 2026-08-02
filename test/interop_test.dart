@@ -3,12 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Widget _host(Widget child) {
-  return Directionality(textDirection: TextDirection.ltr, child: child);
-}
+import 'support.dart';
 
 Widget _counterView(ValueListenable<int> listenable) {
-  return _host(
+  return host(
     ValueListenableBuilder<int>(
       valueListenable: listenable,
       builder: (_, int value, _) => Text('count: $value'),
@@ -39,7 +37,7 @@ void main() {
       final Computed<int> doubled = Computed(() => count.value * 2);
 
       await tester.pumpWidget(
-        _host(
+        host(
           ListenableBuilder(
             listenable: Listenable.merge(<Listenable>[count, doubled]),
             builder: (_, _) => Text('${count.peek()} / ${doubled.peek()}'),

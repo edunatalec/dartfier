@@ -2,9 +2,7 @@ import 'package:dartfier/dartfier.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Widget _host(Widget child) {
-  return Directionality(textDirection: TextDirection.ltr, child: child);
-}
+import 'support.dart';
 
 base class _ProbeSignal<T> extends Signal<T> {
   _ProbeSignal(super.initial);
@@ -26,7 +24,7 @@ void main() {
       final Signal<int> count = Signal(0);
 
       await tester.pumpWidget(
-        _host(Observer((context) => Text('${count.value}'))),
+        host(Observer((context) => Text('${count.value}'))),
       );
 
       expect(find.text('0'), findsOneWidget);
@@ -45,7 +43,7 @@ void main() {
       int builds = 0;
 
       await tester.pumpWidget(
-        _host(
+        host(
           Observer((context) {
             builds++;
 
@@ -74,7 +72,7 @@ void main() {
       int builds = 0;
 
       await tester.pumpWidget(
-        _host(
+        host(
           Observer((context) {
             builds++;
 
@@ -110,7 +108,7 @@ void main() {
       final Computed<int> doubled = Computed(() => count.value * 2);
 
       await tester.pumpWidget(
-        _host(Observer((context) => Text('${doubled.value}'))),
+        host(Observer((context) => Text('${doubled.value}'))),
       );
 
       expect(find.text('2'), findsOneWidget);
@@ -128,7 +126,7 @@ void main() {
       int builds = 0;
 
       await tester.pumpWidget(
-        _host(
+        host(
           Observer((context) {
             builds++;
 
@@ -156,12 +154,12 @@ void main() {
       final _ProbeSignal<int> count = _ProbeSignal(0);
 
       await tester.pumpWidget(
-        _host(Observer((context) => Text('${count.value}'))),
+        host(Observer((context) => Text('${count.value}'))),
       );
 
       expect(count.isObserved, isTrue);
 
-      await tester.pumpWidget(_host(const SizedBox()));
+      await tester.pumpWidget(host(const SizedBox()));
 
       expect(count.isObserved, isFalse);
 
@@ -177,7 +175,7 @@ void main() {
       int outerBuilds = 0;
 
       await tester.pumpWidget(
-        _host(
+        host(
           Observer((context) {
             outerBuilds++;
 
@@ -208,7 +206,7 @@ void main() {
       int innerBuilds = 0;
 
       await tester.pumpWidget(
-        _host(
+        host(
           Observer((context) {
             outerBuilds++;
 
@@ -248,7 +246,7 @@ void main() {
     testWidgets('reports an error in debug when the builder tracks nothing', (
       tester,
     ) async {
-      await tester.pumpWidget(_host(Observer((context) => const SizedBox())));
+      await tester.pumpWidget(host(Observer((context) => const SizedBox())));
 
       expect(tester.takeException(), isA<FlutterError>());
     });
@@ -258,7 +256,7 @@ void main() {
       final count = Signal(0);
 
       await tester.pumpWidget(
-        _host(
+        host(
           Observer((context) {
             final int seen = count.value;
 
@@ -291,7 +289,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        _host(
+        host(
           Observer.withChild(
             builder: (context, child) =>
                 Column(children: [Text('${count.value}'), child!]),
@@ -312,7 +310,7 @@ void main() {
       int builds = 0;
 
       await tester.pumpWidget(
-        _host(
+        host(
           Observer((context) {
             builds++;
 
@@ -336,7 +334,7 @@ void main() {
       final ValueNotifier<bool> foreign = ValueNotifier(false);
 
       await tester.pumpWidget(
-        _host(
+        host(
           Observer(
             (context) => Text('${count.value} ${foreign.value}'),
             listenables: [foreign],
@@ -361,7 +359,7 @@ void main() {
       final _ProbeNotifier foreign = _ProbeNotifier();
 
       await tester.pumpWidget(
-        _host(Observer((context) => const SizedBox(), listenables: [foreign])),
+        host(Observer((context) => const SizedBox(), listenables: [foreign])),
       );
 
       expect(tester.takeException(), isNull);
@@ -374,7 +372,7 @@ void main() {
       final _ProbeNotifier second = _ProbeNotifier();
       int builds = 0;
 
-      Widget pumpWith(Listenable listenable) => _host(
+      Widget pumpWith(Listenable listenable) => host(
         Observer((context) {
           builds++;
 
@@ -401,7 +399,7 @@ void main() {
       final _ProbeNotifier foreign = _ProbeNotifier();
       int builds = 0;
 
-      Widget pump() => _host(
+      Widget pump() => host(
         Observer((context) {
           builds++;
 
@@ -425,9 +423,9 @@ void main() {
       final _ProbeNotifier foreign = _ProbeNotifier();
 
       await tester.pumpWidget(
-        _host(Observer((context) => const SizedBox(), listenables: [foreign])),
+        host(Observer((context) => const SizedBox(), listenables: [foreign])),
       );
-      await tester.pumpWidget(_host(const SizedBox()));
+      await tester.pumpWidget(host(const SizedBox()));
 
       expect(foreign.isObserved, isFalse);
     });
@@ -436,7 +434,7 @@ void main() {
       final ValueNotifier<int> foreign = ValueNotifier(0);
 
       await tester.pumpWidget(
-        _host(
+        host(
           Observer.withChild(
             builder: (context, child) =>
                 Column(children: [Text('${foreign.value}'), child!]),

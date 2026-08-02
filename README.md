@@ -2,7 +2,8 @@
 [![package publisher](https://img.shields.io/pub/publisher/dartfier.svg)](https://pub.dev/packages/dartfier/publisher)
 
 Fine-grained reactivity for Flutter, built entirely on `ChangeNotifier`:
-`Signal`, `Computed`, `Effect` and an auto-tracking `Observer` widget.
+`Signal`, `Computed`, `Effect`, `AsyncSignal` and an auto-tracking `Observer`
+widget.
 
 Flutter only, zero dependencies, no code generation, full `ValueListenable`
 interop.
@@ -115,9 +116,9 @@ it — that is the `dispose()` above, and the full ownership rule is in
 `Signal` is a `ChangeNotifier` implementing `ValueListenable<T>`, so adopting it
 is a type change:
 
-```dart
-final ValueNotifier<int> count = ValueNotifier(0);
-final Signal<int> count = Signal(0);
+```diff
+- final ValueNotifier<int> count = ValueNotifier(0);
++ final Signal<int> count = Signal(0);
 ```
 
 Every consumer keeps working untouched — a `ValueListenableBuilder`, an
@@ -144,6 +145,11 @@ final Signal<List<int>> items = Signal([1, 2], equals: listEquals);
 items.value = [1, 2]; // equal by listEquals — listeners not notified
 items.value = [1, 2, 3]; // notifies
 ```
+
+`listEquals` is Flutter's, not dartfier's: it needs
+`import 'package:flutter/foundation.dart';`, and so do `mapEquals` and
+`setEquals`. A file that already imports `material.dart` gets them for free; a
+plain store usually does not.
 
 **Collections are replaced, never mutated in place.** Like `ValueNotifier`, a
 `Signal` notifies on assignment, not on what you do to the object it holds —

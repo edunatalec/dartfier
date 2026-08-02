@@ -2,6 +2,8 @@ import 'package:dartfier/dartfier.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support.dart';
+
 void main() {
   group('Computed', () {
     test('computes lazily on first read', () {
@@ -301,11 +303,7 @@ void main() {
       first.addListener(() {});
       second.addListener(() {});
 
-      final List<Object> reported = <Object>[];
-      final FlutterExceptionHandler? handler = FlutterError.onError;
-      FlutterError.onError = (FlutterErrorDetails details) =>
-          reported.add(details.exception);
-      addTearDown(() => FlutterError.onError = handler);
+      final List<Object> reported = captureFlutterErrors();
 
       expect(() => count.value = 2, throwsStateError);
 

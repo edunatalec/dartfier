@@ -3,9 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Widget _host(Widget child) {
-  return Directionality(textDirection: TextDirection.ltr, child: child);
-}
+import 'support.dart';
 
 void main() {
   group('ReadonlySignal', () {
@@ -59,7 +57,7 @@ void main() {
       final ReadonlySignal<int> view = count;
 
       await tester.pumpWidget(
-        _host(Observer((context) => Text('${view.value}'))),
+        host(Observer((context) => Text('${view.value}'))),
       );
 
       expect(find.text('0'), findsOneWidget);
@@ -75,7 +73,7 @@ void main() {
       final ReadonlySignal<int> view = count;
 
       await tester.pumpWidget(
-        _host(
+        host(
           ValueListenableBuilder<int>(
             valueListenable: view,
             builder: (_, value, _) => Text('$value'),
