@@ -26,7 +26,7 @@ Or in `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dartfier: ^0.1.0
+  dartfier: ^0.2.0
 ```
 
 ```dart

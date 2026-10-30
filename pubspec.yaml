@@ -1,6 +1,6 @@
 name: dartfier
 description: 'Fine-grained reactivity for Flutter, built on ChangeNotifier: Signal, Computed, Effect, AsyncSignal and an auto-tracking Observer widget. Zero dependencies.'
-version: 0.1.0
+version: 0.2.0
 repository: https://github.com/edunatalec/dartfier
 
 environment:
