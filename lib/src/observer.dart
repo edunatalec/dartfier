@@ -1,6 +1,7 @@
 /// @docImport 'package:dartfier/dartfier.dart';
 library;
 
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
 import 'tracker.dart';
@@ -27,6 +28,12 @@ import 'tracker.dart';
 /// The builder must not write to a value the observer tracks: the framework
 /// discards a rebuild marked from inside a build, so the UI would silently
 /// show stale state. In debug mode, such a write throws a [FlutterError].
+///
+/// A write that lands while the frame is building — a sibling's `initState`
+/// loading shared state, say — rebuilds the observer after that frame
+/// instead of marking it mid-build, so writing from `initState` needs no
+/// [SchedulerBinding.addPostFrameCallback] of its own. Several such writes
+/// still rebuild it once.
 ///
 /// A foreign [Listenable] — a [FocusNode], a [ScrollController], any
 /// notifier that is not a [Signal] — is invisible to tracking. Pass it
@@ -107,6 +114,8 @@ class _ObserverState extends State<Observer> {
 
   bool _building = false;
 
+  bool _rebuildDeferred = false;
+
   @override
   void initState() {
     super.initState();
@@ -173,7 +182,21 @@ class _ObserverState extends State<Observer> {
       );
     }());
 
-    setState(() {});
+    if (SchedulerBinding.instance.schedulerPhase !=
+        SchedulerPhase.persistentCallbacks) {
+      setState(() {});
+
+      return;
+    }
+
+    if (_rebuildDeferred) return;
+
+    _rebuildDeferred = true;
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      _rebuildDeferred = false;
+
+      if (mounted) setState(() {});
+    });
   }
 
   void _subscribeListenables() {

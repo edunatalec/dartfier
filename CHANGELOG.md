@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- `Observer` no longer throws "setState() or markNeedsBuild() called during build" when a value it tracks is written while a frame is building — a page's `initState` loading state another branch of the tree observes. The rebuild is deferred to right after that frame, and several such writes still rebuild it once. A builder writing to a value its own observer tracks still throws in debug.
+
 ## [0.1.0] - 2026-08-01
 
 ### Added

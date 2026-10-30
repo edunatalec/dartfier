@@ -16,6 +16,46 @@ class _ProbeNotifier extends ChangeNotifier {
   void bump() => notifyListeners();
 }
 
+class _Reveal extends StatefulWidget {
+  const _Reveal({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<_Reveal> createState() => _RevealState();
+}
+
+class _RevealState extends State<_Reveal> {
+  bool _shown = false;
+
+  void show() => setState(() => _shown = true);
+
+  @override
+  Widget build(BuildContext context) =>
+      _shown ? widget.child : const SizedBox();
+}
+
+class _WriteOnInit extends StatefulWidget {
+  const _WriteOnInit({required this.write});
+
+  final VoidCallback write;
+
+  @override
+  State<_WriteOnInit> createState() => _WriteOnInitState();
+}
+
+class _WriteOnInitState extends State<_WriteOnInit> {
+  @override
+  void initState() {
+    super.initState();
+
+    widget.write();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox();
+}
+
 void main() {
   group('Observer', () {
     testWidgets('rebuilds when a signal read in the builder changes', (
@@ -273,6 +313,72 @@ void main() {
       await tester.pump();
 
       expect(tester.takeException(), isA<FlutterError>());
+    });
+
+    testWidgets('a write from another branch during the build rebuilds it '
+        'after the frame', (tester) async {
+      final Signal<int> count = Signal(0);
+      final GlobalKey<_RevealState> reveal = GlobalKey();
+
+      await tester.pumpWidget(
+        host(
+          Column(
+            children: [
+              Observer((context) => Text('${count.value}')),
+              _Reveal(
+                key: reveal,
+                child: _WriteOnInit(write: () => count.value = 1),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      reveal.currentState!.show();
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+
+      await tester.pump();
+
+      expect(find.text('1'), findsOneWidget);
+    });
+
+    testWidgets('several writes from another branch during the build '
+        'rebuild it once', (tester) async {
+      final Signal<int> count = Signal(0);
+      final GlobalKey<_RevealState> reveal = GlobalKey();
+      int builds = 0;
+
+      await tester.pumpWidget(
+        host(
+          Column(
+            children: [
+              Observer((context) {
+                builds++;
+
+                return Text('${count.value}');
+              }),
+              _Reveal(
+                key: reveal,
+                child: _WriteOnInit(
+                  write: () {
+                    count.value = 1;
+                    count.value = 2;
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      reveal.currentState!.show();
+      await tester.pump();
+      await tester.pump();
+
+      expect(builds, 2);
+      expect(find.text('2'), findsOneWidget);
     });
 
     testWidgets('withChild passes the static child without rebuilding it', (

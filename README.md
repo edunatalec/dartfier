@@ -294,6 +294,10 @@ In debug mode, an `Observer` whose builder tracks nothing and lists no
 `listenables` throws a `FlutterError` — such a widget would never rebuild,
 which is the silent bug this model is most prone to.
 
+A write that lands while a frame is building — a page's `initState` loading
+state another branch of the tree observes — rebuilds the observer right after
+that frame, so loading from `initState` needs no `addPostFrameCallback`.
+
 ### AsyncSignal
 
 The bridge between the synchronous graph and asynchronous work. An
